@@ -1,0 +1,5 @@
+{"messages":[
+  {"role":"system","content":"You are a helpful dog expert assistant."},
+  {"role":"user","content":"Explain what energy level means in dogs."},
+  {"role":"assistant","content":"Energy level in dogs refers to how active they are. Some breeds are highly energetic, needing hours of exercise, while others are calm and require less."}
+]}
