@@ -1,43 +1,27 @@
-import React, { useState } from 'react';
-import { getRecommendations } from './api';
+// /frontend/src/App.js
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import Home from './pages/Home';
+import Questionnaire from './pages/Questionnaire';
+import Results from './pages/Results';
 
 function App() {
-  const [results, setResults] = useState(null);
-
-  const handleTest = async () => {
-    try {
-      const dummyAnswers = [
-        { trait: 'energyLevel', value: [4], priority: 'medium' },
-        { trait: 'coatType', value: ['curly'], priority: 'high' },
-        { trait: 'livingEnvironment', value: ['urban'], priority: 'medium' }
-      ];
-
-      const data = await getRecommendations(dummyAnswers);
-      setResults(data.data);
-    } catch (error) {
-      alert(error.error || 'Something went wrong');
-    }
-  };
-
   return (
-    <div style={{ textAlign: 'center', padding: '2rem' }}>
-      <h1>🐾 Dog4You</h1>
-      <p>Welcome to your personalized dog breed recommender!</p>
-      <button onClick={handleTest}>Test Recommendation</button>
+    <Router>
+      <div style={{ textAlign: 'center', padding: '2rem' }}>
+        <h1>🐾 Dog4You</h1>
+        <nav>
+          <Link to="/" style={{ margin: '0 1rem' }}>Home</Link>
+          <Link to="/questionnaire" style={{ margin: '0 1rem' }}>Questionnaire</Link>
+        </nav>
 
-      {results && (
-        <div style={{ marginTop: '2rem' }}>
-          <h2>Results:</h2>
-          <ul>
-            {results.map((r, index) => (
-              <li key={index}>
-                {r.breed} — {r.matchPercentage}%
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/questionnaire" element={<Questionnaire />} />
+          <Route path="/results" element={<Results />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 

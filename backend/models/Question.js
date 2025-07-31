@@ -28,7 +28,7 @@ const questionSchema = new mongoose.Schema({
       'opennessToStrangers', 'protectiveNature', 'adaptabilityLevel',
       'playfulnessLevel', 'coatType', 'coatLength',
       'lifeExpectancy', 'weight', 'height', 'shedding',
-      'groomingFrequency', 'apartmentFriendly'
+      'groomingFrequency', 'apartmentFriendly', 'livingEnvironment'
     ],
     required: true
   },
