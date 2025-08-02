@@ -1,8 +1,15 @@
-// /routes/llm.js
 const express = require('express');
 const router = express.Router();
-const { getTraitExplanation } = require('../controllers/llmController');
+const {
+  explainTrait,
+  whyMatch,
+  careTips,
+  whyNot
+} = require('../controllers/llmController');
 
-router.post('/explain', getTraitExplanation); // More endpoints can be added later
+router.post('/explainTrait', explainTrait);
+router.post('/whyMatch', whyMatch);
+router.post('/careTips', careTips);
+router.post('/whyNot', whyNot);
 
 module.exports = router;
