@@ -7,6 +7,13 @@ const breedSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
+  nameLower: {
+    type: String,
+    required: true,
+    lowercase: true,
+    unique: true,
+    trim: true
+  },
 
   height: {
     min: { type: Number, required: true },
@@ -57,15 +64,33 @@ const breedSchema = new mongoose.Schema({
   commonHealthIssues: [{
     name: { type: String },
     prevalence: { type: Number, min: 1, max: 5 }
-  }]
+  }],
+
+  lastUpdated: {
+    type: Date,
+    default: Date.now
+  }
 }, { toJSON: { virtuals: true }, toObject: { virtuals: true } });
 
-// ✅ Virtual field for size category
-breedSchema.virtual('sizeCategory').get(function() {
-  const height = this.height.max; // use max height to decide
+// Virtual for size category
+breedSchema.virtual('sizeCategory').get(function () {
+  const height = this.height?.max;
+  if (height === undefined) return null;
   if (height < 30) return 'small';
   if (height >= 30 && height <= 55) return 'medium';
   return 'large';
 });
+
+// Keep nameLower in sync
+breedSchema.pre('save', function (next) {
+  if (this.name) {
+    this.nameLower = this.name.toLowerCase();
+  }
+  next();
+});
+
+// Indexes for performance
+breedSchema.index({ name: 1 });
+breedSchema.index({ nameLower: 1 });
 
 module.exports = mongoose.model('Breed', breedSchema);

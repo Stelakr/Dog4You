@@ -21,8 +21,7 @@ const explainTrait = async (req, res, next) => {
 
 /**
  * POST /api/llm/whyMatch
- * body: { breed, matchPercentage, answers } 
- * answers is array of { trait, value, priority, dealbreaker, mode }
+ * body: { breed, matchPercentage, answers }
  */
 const whyMatch = async (req, res, next) => {
   try {
@@ -34,11 +33,10 @@ const whyMatch = async (req, res, next) => {
       });
     }
 
-    // Create a human-readable summary of answers
     const answersSummary = answers
       .map(a => {
         let desc = `${a.trait}: ${JSON.stringify(a.value)}`;
-        if (a.dealbreaker) desc += ' (dealbreaker)';
+        if (a.dealbreaker) desc += a.mode === 'exclude' ? ' (exclude dealbreaker)' : ' (accept dealbreaker)';
         if (a.priority === 'high') desc += ' (high priority)';
         if (a.priority === 'low') desc += ' (flexible)';
         return desc;
@@ -48,7 +46,8 @@ const whyMatch = async (req, res, next) => {
     const explanation = await callLLM('whyMatch', {
       breed,
       matchPercentage,
-      answersSummary
+      answersSummary,
+      answers
     });
 
     res.json({ success: true, data: explanation.trim() });
@@ -90,7 +89,7 @@ const whyNot = async (req, res, next) => {
     const answersSummary = answers
       .map(a => {
         let desc = `${a.trait}: ${JSON.stringify(a.value)}`;
-        if (a.dealbreaker) desc += ' (dealbreaker)';
+        if (a.dealbreaker) desc += a.mode === 'exclude' ? ' (exclude dealbreaker)' : ' (accept dealbreaker)';
         if (a.priority === 'high') desc += ' (high priority)';
         if (a.priority === 'low') desc += ' (flexible)';
         return desc;
@@ -99,7 +98,8 @@ const whyNot = async (req, res, next) => {
 
     const explanation = await callLLM('whyNot', {
       breed,
-      answersSummary
+      answersSummary,
+      answers
     });
 
     res.json({ success: true, data: explanation.trim() });

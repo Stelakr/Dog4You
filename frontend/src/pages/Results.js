@@ -1,167 +1,335 @@
 // /frontend/src/pages/Results.js
-import React, { useState } from 'react';
-//import { useLocation, Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { traitExplanations } from '../utils/traitExplanations';
 
 
 function Results() {
-  const navigate = useNavigate();
   const location = useLocation();
+  const navigate = useNavigate();
   const results = location.state?.results || [];
-  const [expanded, setExpanded] = useState({});
-  const [llmResponse, setLlmResponse] = useState({});
-  const [loadingLlm, setLoadingLlm] = useState({});
+  const rawAnswers = location.state?.rawAnswers || [];
 
-  const toggleExpand = (breed) => {
-    setExpanded(prev => ({ ...prev, [breed]: !prev[breed] }));
+  // State
+  const [whyMatchInfo, setWhyMatchInfo] = useState({});
+  const [whyNotBreed, setWhyNotBreed] = useState('');
+  const [whyNotInfo, setWhyNotInfo] = useState('');
+  const [loadingWhyMatch, setLoadingWhyMatch] = useState({});
+  const [loadingWhyNot, setLoadingWhyNot] = useState(false);
+  const [error, setError] = useState(null);
+  const [careTipsInfo, setCareTipsInfo] = useState({});
+  const [loadingCareTips, setLoadingCareTips] = useState({});
+  const [breedDetailsCache, setBreedDetailsCache] = useState({});
+  const [exclusionBannerText, setExclusionBannerText] = useState('');
+
+  // Redirect back if missing context
+  useEffect(() => {
+    if (!rawAnswers.length || !results.length) {
+      const t = setTimeout(() => navigate('/questionnaire'), 800);
+      return () => clearTimeout(t);
+    }
+  }, [rawAnswers, results, navigate]);
+
+  // Styles
+  const cardStyle = {
+    border: '1px solid #ccc',
+    padding: '1rem',
+    borderRadius: 8,
+    marginBottom: '1rem',
+    position: 'relative'
   };
 
-  const askLLM = async (promptKey, breed) => {
-    // promptKey: 'whyNot' or 'careTips'
-    setLoadingLlm(prev => ({ ...prev, [breed + promptKey]: true }));
-    try {
-      let prompt;
-      if (promptKey === 'whyNot') {
-        prompt = `Explain why the user did not get ${breed} as a top match given their preferences.`;
-      } else if (promptKey === 'careTips') {
-        prompt = `Give caring advice and key responsibilities for owning a ${breed}. Include exercise, grooming, and common health considerations.`;
-      } else {
+  // Debounce helper
+  const debounce = (fn, delay) => {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn(...args), delay);
+    };
+  };
+
+  const debouncedSetWhyNotBreed = useCallback(
+    debounce((val) => {
+      setWhyNotBreed(val);
+    }, 400),
+    []
+  );
+
+
+  // Breed fetch helper with caching (memoized)
+  const fetchBreedDetails = useCallback(
+    async (breedName) => {
+      if (breedDetailsCache[breedName]) return breedDetailsCache[breedName];
+      try {
+        const res = await api.get(`/api/breeds/${encodeURIComponent(breedName)}`);
+        if (res.data?.success) {
+          setBreedDetailsCache(prev => ({ ...prev, [breedName]: res.data.data }));
+          return res.data.data;
+        }
+      } catch (e) {
+        console.warn('Failed to fetch breed details:', e);
+      }
+      return null;
+    },
+    [breedDetailsCache]
+  );
+
+  // Compute exclusion banner when whyNotBreed changes (debounced trigger optional)
+  useEffect(() => {
+    const computeExclusion = async () => {
+      if (!whyNotBreed || !rawAnswers.length) {
+        setExclusionBannerText('');
         return;
       }
 
-      const res = await api.post('/api/llm/explain', { trait: prompt }); // adapt endpoint or create dedicated one
-      setLlmResponse(prev => ({
-        ...prev,
-        [breed + promptKey]: res.data.data
-      }));
+      const breedData = await fetchBreedDetails(whyNotBreed);
+      if (!breedData) {
+        setExclusionBannerText('Breed not found in our database.');
+        return;
+      }
+
+      const applicableExclusions = rawAnswers
+        .filter(a => a.dealbreaker && a.mode === 'exclude')
+        .filter(a => {
+          let breedValue;
+          if (a.trait === 'sizeCategory') {
+            const maxHeight = breedData.height?.max;
+            if (maxHeight === undefined) return false;
+            if (maxHeight < 30) breedValue = 'small';
+            else if (maxHeight > 30 && maxHeight <= 55) breedValue = 'medium';
+            else breedValue = 'large';
+          } else {
+            breedValue = breedData[a.trait];
+          }
+
+          if (breedValue === undefined) return false;
+
+          const userVals = Array.isArray(a.value) ? a.value : [a.value];
+          if (Array.isArray(breedValue)) {
+            return userVals.some(v => breedValue.includes(v));
+          } else {
+            return userVals.includes(breedValue);
+          }
+        });
+
+      if (applicableExclusions.length > 0) {
+        const parts = applicableExclusions.map(a => {
+          const val = Array.isArray(a.value) ? a.value[0] : a.value;
+          const traitLabel = traitExplanations[a.trait]?.label || a.trait;
+          const valueLabel = traitExplanations[a.trait]?.values?.[val] || val;
+          return `You excluded ${traitLabel}: ${valueLabel}`;
+        });
+        setExclusionBannerText(`${parts.join(' and ')} via exclude dealbreaker.`);
+      } else {
+        setExclusionBannerText('');
+      }
+    };
+
+    computeExclusion();
+  }, [whyNotBreed, rawAnswers, fetchBreedDetails]);
+
+  // Fetch "Why this match?"
+  const fetchWhyMatch = async (result, index) => {
+    setError(null);
+    setLoadingWhyMatch(prev => ({ ...prev, [index]: true }));
+    try {
+      if (!rawAnswers.length) {
+        setError('Missing context answers for whyMatch.');
+        return;
+      }
+      const payload = {
+        breed: result.breed,
+        matchPercentage: result.matchPercentage,
+        answers: rawAnswers
+      };
+      const res = await api.post('/api/llm/whyMatch', payload);
+      setWhyMatchInfo(prev => ({ ...prev, [index]: res.data.data }));
     } catch (err) {
-      console.error('LLM error:', err);
-      setLlmResponse(prev => ({
-        ...prev,
-        [breed + promptKey]: 'Sorry, something went wrong with the assistant. Please try again.'
-      }));
+      console.error('whyMatch error', err);
+      setError('Failed to get explanation for match.');
     } finally {
-      setLoadingLlm(prev => ({ ...prev, [breed + promptKey]: false }));
+      setLoadingWhyMatch(prev => ({ ...prev, [index]: false }));
     }
   };
 
-  return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: '1rem' }}>
-      <h2>Your Matches</h2>
+  // Fetch "Why not this breed?"
+  const fetchWhyNot = async () => {
+    setError(null);
+    if (!whyNotBreed) return;
+    setLoadingWhyNot(true);
+    setWhyNotInfo('');
+    try {
+      if (!rawAnswers.length) {
+        setError('Missing context answers for whyNot.');
+        return;
+      }
+      const payload = {
+        breed: whyNotBreed,
+        answers: rawAnswers
+      };
+      const res = await api.post('/api/llm/whyNot', payload);
+      setWhyNotInfo(res.data.data);
+    } catch (err) {
+      console.error('whyNot error', err);
+      setError('Failed to get why-not explanation.');
+    } finally {
+      setLoadingWhyNot(false);
+    }
+  };
 
-      <p style={{ fontSize: '0.9rem', color: '#555' }}>
-        Matches are based on verified breed standards and your preferences. Individual dogs may vary.{' '}
-        <button
-          style={{ marginLeft: 8, fontSize: '0.8rem', cursor: 'pointer' }}
-          onClick={() =>
-            alert(
-              'How we recommend: We combine your trait preferences, dealbreakers, and flexibles with vetted breed standard data. High priority traits carry more weight; flexible traits slightly influence the match. The assistant can explain traits and care tips.'
-            )
-          }
-        >
-          ℹ️ How this works
-        </button>
+  // Fetch care tips
+  const fetchCareTips = async (breed, index) => {
+    setError(null);
+    setLoadingCareTips(prev => ({ ...prev, [index]: true }));
+    try {
+      const res = await api.post('/api/llm/careTips', { breed });
+      setCareTipsInfo(prev => ({ ...prev, [index]: res.data.data }));
+    } catch (e) {
+      console.error('careTips error', e);
+      setError('Failed to get care tips.');
+    } finally {
+      setLoadingCareTips(prev => ({ ...prev, [index]: false }));
+    }
+  };
+
+  // Reset flow
+  const handleTryAgain = () => {
+    localStorage.removeItem('dog4you_answers');
+    localStorage.removeItem('dog4you_currentIndex');
+    navigate('/questionnaire');
+  };
+
+  // No results case
+  if (!results.length) {
+    return (
+      <div style={{ padding: '1rem', maxWidth: 600, margin: '0 auto' }}>
+        <p>No matches found.</p>
+        <button onClick={handleTryAgain}>Try Again</button>
+        {error && <div style={{ color: 'crimson', marginTop: 12 }}>{error}</div>}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: '1rem', maxWidth: 900, margin: '0 auto' }}>
+      <h1>Your Matches</h1>
+      <p style={{ fontSize: 12, marginTop: 4, marginBottom: 16 }}>
+        Matches are based on verified breed standards and your preferences. Individual dogs may vary.
       </p>
 
-      {results.length === 0 ? (
-        <p>No matches found. Try adjusting your answers!</p>
-      ) : (
-        <div>
-          {results.map((r, i) => (
-            <div
-              key={i}
-              style={{
-                border: '1px solid #ddd',
-                borderRadius: 12,
-                padding: '1rem',
-                marginBottom: '1rem',
-                position: 'relative',
-                background: '#f9f9f9'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div>
-                  <h3 style={{ margin: 0 }}>
-                    #{i + 1} 🐶 {r.breed} — {r.matchPercentage}% match
-                  </h3>
-                  {r.reasons?.length > 0 && (
-                    <p style={{ margin: '4px 0', fontSize: '0.9rem' }}>
-                      Not perfect because: {r.reasons.slice(0, 2).join(', ')}
-                      {r.reasons.length > 2 && ` +${r.reasons.length - 2} more`}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <button onClick={() => toggleExpand(r.breed)}>
-                    {expanded[r.breed] ? 'Hide details' : 'Show details'}
-                  </button>
-                </div>
-              </div>
-
-              {expanded[r.breed] && (
-                <div style={{ marginTop: '0.75rem' }}>
-                  {r.reasons?.length > 0 ? (
-                    <ul>
-                      {r.reasons.map((reason, j) => (
-                        <li key={j}>⚠️ {reason}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>🌟 Perfect match with your preferences!</p>
-                  )}
-
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-                    <div>
-                      <button
-                        onClick={() => askLLM('whyNot', r.breed)}
-                        disabled={loadingLlm[r.breed + 'whyNot']}
-                      >
-                        {loadingLlm[r.breed + 'whyNot'] ? 'Thinking...' : `Why this match?`}
-                      </button>
-                      {llmResponse[r.breed + 'whyNot'] && (
-                        <div style={{ marginTop: 6, fontSize: '0.85rem', background: '#fff', padding: 8, borderRadius: 6 }}>
-                          {llmResponse[r.breed + 'whyNot']}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <button
-                        onClick={() => askLLM('careTips', r.breed)}
-                        disabled={loadingLlm[r.breed + 'careTips']}
-                      >
-                        {loadingLlm[r.breed + 'careTips'] ? 'Thinking...' : 'Care Tips'}
-                      </button>
-                      {llmResponse[r.breed + 'careTips'] && (
-                        <div style={{ marginTop: 6, fontSize: '0.85rem', background: '#fff', padding: 8, borderRadius: 6 }}>
-                          {llmResponse[r.breed + 'careTips']}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+      {results.map((r, i) => (
+        <div key={i} style={cardStyle}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ flex: 1, minWidth: 250 }}>
+              <h2 style={{ margin: '0 0 4px' }}>
+                #{i + 1} 🐶 {r.breed} — {r.matchPercentage}% match
+              </h2>
+              {r.reasons && r.reasons.length > 0 && (
+                <p style={{ color: '#b55', margin: 0 }}>
+                  Not perfect because: {r.reasons.join('; ')}
+                </p>
               )}
-              <div style={{ marginTop: 8 }}>
-                <Link to="/questionnaire">
-                  <button style={{ marginTop: 4 }}>Edit Answers</button>
-                </Link>
-              </div>
             </div>
-          ))}
-        </div>
-      )}
-      <div style={{ marginTop: '1rem' }}>
-        <Link to="/questionnaire">
-          <button onClick={() => {
-            localStorage.removeItem('dog4you_answers');
-            localStorage.removeItem('dog4you_currentIndex');
-            navigate('/questionnaire');
-          }}>
-            Try Again
-          </button>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                onClick={() => fetchWhyMatch(r, i)}
+                disabled={loadingWhyMatch[i]}
+                aria-busy={loadingWhyMatch[i]}
+                aria-label={`Why this match for ${r.breed}`}
+              >
+                {loadingWhyMatch[i] ? '⏳ Loading...' : 'Why this match?'}
+              </button>
+              <button
+                onClick={() => fetchCareTips(r.breed, i)}
+                disabled={loadingCareTips[i]}
+                aria-busy={loadingCareTips[i]}
+                aria-label={`Show care tips for ${r.breed}`}
+              >
+                {loadingCareTips[i] ? '⏳ Loading...' : 'Show Care Tips'}
+              </button>
+            </div>
+          </div>
 
-        </Link>
+          {whyMatchInfo[i] && (
+            <div style={{ background: '#f0f8ff', padding: '10px', borderRadius: 6, marginTop: 12 }}>
+              <strong>Explanation:</strong> {whyMatchInfo[i]}
+            </div>
+          )}
+
+          {careTipsInfo[i] && (
+            <div style={{ background: '#e8f7e8', padding: 10, borderRadius: 6, marginTop: 12 }}>
+              <strong>Care Tips:</strong> {careTipsInfo[i]}
+            </div>
+          )}
+        </div>
+      ))}
+
+      <div style={{ marginTop: 24, borderTop: '1px solid #ddd', paddingTop: 24 }}>
+        <h3>Expected a different breed?</h3>
+        <p style={{ marginTop: 4 }}>
+          Type the breed you thought you’d get and ask why not. If a breed was explicitly excluded by your dealbreaker, you’ll see that highlighted.
+        </p>
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            aria-label="Enter a breed name to check why it was not recommended"
+            value={whyNotBreed}
+            onChange={(e) => {
+                const val = e.target.value;
+                setWhyNotInfo('');
+                setExclusionBannerText('');
+                debouncedSetWhyNotBreed(val);
+            }}
+            placeholder="e.g., Border Collie"
+            style={{ flex: 1, minWidth: 200, padding: 6 }}
+          />
+          <button
+            onClick={fetchWhyNot}
+            disabled={loadingWhyNot || !whyNotBreed}
+            aria-busy={loadingWhyNot}
+            aria-label={whyNotBreed ? `Why not ${whyNotBreed}` : 'Enter a breed to ask why not'}
+          >
+            {loadingWhyNot ? '⏳ Thinking...' : `Why not ${whyNotBreed}?`}
+          </button>
+        </div>
+
+        {exclusionBannerText && (
+          <div
+            style={{
+              background: exclusionBannerText.toLowerCase().includes('not found') ? '#fff3cd' : '#ffe8e8',
+              padding: 10,
+              borderRadius: 6,
+              marginTop: 12,
+              border: exclusionBannerText.toLowerCase().includes('not found')
+                ? '1px solid #ffe58f'
+                : '1px solid #dd9999',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <div>
+              <strong>{exclusionBannerText}</strong>
+            </div>
+            {exclusionBannerText.toLowerCase().includes('not found') && (
+              <button onClick={fetchWhyNot} style={{ marginLeft: 8, padding: '4px 8px' }}>
+                Retry
+              </button>
+            )}
+          </div>
+        )}
+
+        {whyNotInfo && (
+          <div style={{ background: '#fff4e5', padding: 10, borderRadius: 6, marginTop: 12 }}>
+            <strong>Why Not Explanation:</strong> {whyNotInfo}
+          </div>
+        )}
+      </div>
+
+      <div style={{ marginTop: 32, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <button onClick={handleTryAgain}>Edit Answers / Try Again</button>
+        {error && <div style={{ color: 'crimson', marginTop: 4 }}>{error}</div>}
       </div>
     </div>
   );

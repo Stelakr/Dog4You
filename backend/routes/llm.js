@@ -1,15 +1,16 @@
+// /routes/llm.js
 const express = require('express');
 const router = express.Router();
 const {
   explainTrait,
   whyMatch,
-  careTips,
-  whyNot
+  whyNot,
+  careTips
 } = require('../controllers/llmController');
 
 router.post('/explainTrait', explainTrait);
 router.post('/whyMatch', whyMatch);
-router.post('/careTips', careTips);
 router.post('/whyNot', whyNot);
+router.post('/careTips', careTips);
 
 module.exports = router;

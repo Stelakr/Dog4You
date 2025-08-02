@@ -185,7 +185,7 @@ function Questionnaire() {
 
     try {
       const res = await api.post('/api/recommend', { answers: formattedAnswers });
-      navigate('/results', { state: { results: res.data.data } });
+      navigate('/results', { state: { results: res.data.data, rawAnswers: formattedAnswers } });
     } catch (err) {
       console.error('❌ Recommendation error:', err);
       setError('Server error. Please try again.');

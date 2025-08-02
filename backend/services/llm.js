@@ -2,81 +2,117 @@
 const OpenAI = require('openai');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Simple in-memory cache with TTL
-const cache = {};
-const DEFAULT_TTL_MS = 1000 * 60 * 10; // 10 minutes
+const explanationCache = {}; // simple in-memory cache for trait explanations
 
-function makeCacheKey(role, context) {
-  // deterministic key based on role and JSON-stringified context
-  return `${role}::${JSON.stringify(context)}`;
-}
+// Helper to call the OpenAI chat completion
+const MODEL = process.env.LLM_MODEL || 'gpt-4o';
 
-function getCached(key) {
-  const entry = cache[key];
-  if (!entry) return null;
-  if (Date.now() > entry.expiry) {
-    delete cache[key];
-    return null;
-  }
-  return entry.value;
-}
-
-function setCached(key, value, ttl = DEFAULT_TTL_MS) {
-  cache[key] = {
-    value,
-    expiry: Date.now() + ttl
-  };
-}
-
-// System prompt shared base
-const BASE_SYSTEM_PROMPT = `
-You are a helpful, evidence-based dog expert assistant. Use only verified dog breed standard knowledge (AKC-style or similarly trustworthy sources). 
-If you are uncertain about something, say you’re unsure rather than hallucinating. 
-Frame your responses to align dog welfare with the user's lifestyle. 
-Be clear, concise, and avoid unnecessary fluff.
-Focus is more on finding the right owner and lifestyle for the dog breed rather than making the user happy.
-`;
-
-async function callLLM(role, context) {
-  const cacheKey = makeCacheKey(role, context);
-  const cached = getCached(cacheKey);
-  if (cached) return cached;
-
-  let userPrompt = '';
-  switch (role) {
-    case 'explainTrait':
-      userPrompt = `Explain the dog trait "${context.trait}" in a friendly, practical way for someone deciding on a match.`;
-      break;
-    case 'whyMatch':
-      userPrompt = `The user gave preferences: ${context.answersSummary}. Explain why the breed "${context.breed}" scored ${context.matchPercentage}%. Highlight strengths, mismatches, and one actionable suggestion to adjust preferences to improve the match but only if he is sure he can fullfil dog's needs.`;
-      break;
-    case 'careTips':
-      userPrompt = `Provide responsible care advice for a "${context.breed}". Cover daily exercise, grooming, common health concerns, and what an owner must be prepared for to keep this breed happy and healthy.`;
-      break;
-    case 'whyNot':
-      userPrompt = `The user expected the breed "${context.breed}" but did not get it as a top match. Given their preferences: ${context.answersSummary}, explain clearly why that breed was not selected, focusing on conflicts or missing priority alignment.`;
-      break;
-    default:
-      throw new Error(`Unknown LLM role: ${role}`);
-  }
-
-  const messages = [
-    { role: 'system', content: BASE_SYSTEM_PROMPT.trim() },
-    { role: 'user', content: userPrompt }
-  ];
-
-  // Use gpt-4o for higher quality
+async function openAIChat(messages, temperature = 0.65, model = MODEL) {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model,
     messages,
-    temperature: 0.7,
-    max_tokens: 500
+    temperature
   });
+  return response.choices[0].message.content.trim();
+}
 
-  const explanation = response.choices[0].message.content.trim();
-  setCached(cacheKey, explanation); // cache result
 
+async function explainTrait({ trait }) {
+  if (explanationCache[trait]) {
+    return explanationCache[trait];
+  }
+
+  const systemPrompt = 'You are a helpful dog expert assistant.';
+  const userPrompt = `Explain the dog trait "${trait}" in a friendly and informative way for someone choosing a breed. Focus on what it means, tradeoffs, and how a typical dog might behave.`;
+
+  const explanation = await openAIChat(
+    [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    0.7 // temperature
+  );
+
+
+  explanationCache[trait] = explanation;
   return explanation;
 }
 
-module.exports = { callLLM };
+async function whyMatch({ breed, matchPercentage, answersSummary, answers }) {
+  const systemPrompt =
+    'You are a dog expert assistant trained to prioritize the wellbeing of the dog by matching lifestyle and owner capabilities. Be clear, concise, and responsible. Understand dealbreaker modes: "accept" means only those values count; "exclude" means those values were filtered out and are neutral otherwise.';
+
+  const userPrompt = `The user was recommended the breed "${breed}" with a match percentage of ${matchPercentage}%. Given these preferences: ${answersSummary}, explain why this breed is a good match. Mention strengths, any mild mismatches, and, if applicable, what tradeoffs were made around excluded values. Provide one actionable suggestion to refine preferences if they want even better alignment.`;
+
+  return await openAIChat(
+    [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    0.65
+  );
+}
+
+
+async function whyNot({ breed, answersSummary, answers }) {
+  const systemPrompt =
+    'You are a transparent dog expert assistant. Your job is to explain clearly why a breed was not a top match given the user’s exact expressed preferences. Pay special attention to dealbreaker semantics: distinguish between "accept" dealbreakers (only these are allowed) and "exclude" dealbreakers (these values are disallowed and should not be confused with preferences).';
+
+  // Build a structured extra note for the model
+  const dealbreakerDetails = answers
+    .filter(a => a.dealbreaker)
+    .map(a => {
+      const modeDesc = a.mode === 'exclude' ? 'excluded (must not have)' : 'accepted only';
+      return `Trait "${a.trait}" is a dealbreaker: ${modeDesc} value(s) ${JSON.stringify(a.value)}.`;
+    })
+    .join(' ');
+
+  const userPrompt = `The user expected the breed "${breed}" but it was not a top match. Given these preferences: ${answersSummary}. ${dealbreakerDetails} Explain why this breed did not rank higher. Highlight specific mismatches, conflicting priorities, or dealbreaker exclusions. If there is a realistic way for the user to adjust preferences to get closer to this breed, mention that. Do not contradict the dealbreaker exclusion semantics (e.g., if "high energy" was excluded, do not say high energy aligns).`;
+
+  return await openAIChat(
+    [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    0.65
+  );
+}
+
+async function careTips({ breed }) {
+  const systemPrompt =
+    'You are a responsible dog-care expert. Provide welfare-oriented advice.';
+  const userPrompt = `Provide responsible care advice for a ${breed}. Cover exercise needs, grooming, common health considerations, and how to match this breed to an owner's lifestyle for long-term wellbeing.`;
+
+  return await openAIChat(
+    [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    0.65
+  );
+}
+
+// Unified entrypoint used by controllers
+async function callLLM(type, payload) {
+  switch (type) {
+    case 'explainTrait':
+      return explainTrait(payload);
+    case 'whyMatch':
+      return whyMatch(payload);
+    case 'whyNot':
+      return whyNot(payload);
+    case 'careTips':
+      return careTips(payload);
+    default:
+      throw new Error(`Unknown LLM call type: ${type}`);
+  }
+}
+
+module.exports = {
+  callLLM,
+  // Exporting individual helpers if needed elsewhere
+  explainTrait,
+  whyMatch,
+  whyNot,
+  careTips
+};
