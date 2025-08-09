@@ -19,33 +19,47 @@ const traitLabels = {
   sizeCategory: "size"
 };
 
+// Debug toggle
 const DEBUG_MODE = process.env.DEBUG_MODE === 'true';
+
+// Multi-select dampening toggles
+const ENABLE_MULTI_DAMPEN = process.env.ENABLE_MULTI_DAMPEN === 'true';
+const MULTI_SELECT_DAMPEN = Number(process.env.MULTI_SELECT_DAMPEN || 0.25);
+
+// Weight by priority
+function baseWeight(priority) {
+  if (priority === 'high') return 5;
+  if (priority === 'low') return 0.5;
+  return 2; // medium
+}
+
+// Dampening factor given number of selected values
+function dampenFactor(values) {
+  if (!ENABLE_MULTI_DAMPEN) return 1;
+  const k = Array.isArray(values) ? values.length : 1;
+  if (k <= 1) return 1;
+  return 1 / (1 + MULTI_SELECT_DAMPEN * (k - 1));
+}
+
+// Compute the effective weight for an answer (priority * dampening)
+function effectiveWeight(answer) {
+  const w = baseWeight(answer.priority || 'medium');
+  return w * dampenFactor(answer.value);
+}
 
 /**
  * Match breeds based on user answers.
- * @param {Array} answers - Array of { trait, value(s), priority?, dealbreaker?, mode? }
- * @param {boolean} includeBreakdown - whether to include per-trait breakdown in returned objects
- * @returns {Array} Ranked list of matching breeds
+ * @param {Array} answers - [{ trait, value, priority?, dealbreaker?, mode? }]
+ * @param {boolean} includeBreakdown - include per-trait breakdown
  */
 async function matchBreeds(answers, includeBreakdown = false) {
   const allBreeds = await Breed.find().lean();
 
+  // Denominator (maximum possible score) uses the same effective weight the numerator will use
   const maxScorePerTrait = 5;
-
-  // Compute totalPossibleScore but skip exclude-dealbreaker traits entirely
-  let totalPossibleScore = 0;
-  for (const a of answers) {
-    const { priority = 'medium', dealbreaker, mode } = a;
-    // If it's exclude dealbreaker, skip (neutral)
-    if (dealbreaker && mode === 'exclude') continue;
-
-    let weight;
-    if (a.priority === 'high') weight = 5;
-    else if (a.priority === 'low') weight = 0.5;
-    else weight = 2;
-
-    totalPossibleScore += maxScorePerTrait * weight;
-  }
+  const totalPossibleScore = answers.reduce((sum, a) => {
+    return sum + maxScorePerTrait * effectiveWeight(a);
+  }, 0);
 
   const scoredBreeds = allBreeds
     .map(breed => {
@@ -61,101 +75,59 @@ async function matchBreeds(answers, includeBreakdown = false) {
           priority = 'medium',
           mode = 'accept'
         } = answer;
+
         const values = Array.isArray(userValuesRaw) ? userValuesRaw : [userValuesRaw];
+        const weight = effectiveWeight(answer);
 
-        // Determine weight
-        let weight;
-        if (priority === 'high') weight = 5;
-        else if (priority === 'low') weight = 0.5;
-        else weight = 2;
-
-        // Resolve breedValue, corrected sizeCategory
+        // Resolve breedValue incl. virtual sizeCategory
         let breedValue;
         if (trait === 'sizeCategory') {
-          const maxHeight = breed.height?.max;
-          if (maxHeight === undefined) {
-            breedValue = undefined;
-          } else if (maxHeight < 30) {
-            breedValue = 'small';
-          } else if (maxHeight > 30 && maxHeight <= 55) {
-            breedValue = 'medium';
+          const hmax = breed.height?.max;
+          if (typeof hmax === 'number') {
+            // small: <30 ; medium: >30 && <=55 ; large: >55
+            breedValue = (hmax < 30) ? 'small' : (hmax > 30 && hmax <= 55) ? 'medium' : 'large';
           } else {
-            breedValue = 'large';
+            breedValue = undefined;
           }
         } else {
           breedValue = breed[trait];
         }
 
-        // Dealbreaker exclusion: if this is exclude and breed has excluded value, drop it
-        if (dealbreaker && mode === 'exclude' && values.includes(breedValue)) {
-          if (DEBUG_MODE) {
-            reasons.push(`${breed.name} excluded due to exclude-dealbreaker on ${trait}`);
-          }
-          return null;
-        }
-
-        // Dealbreaker accept: if accept and breed doesn't have one of the accepted values, drop it
-        if (dealbreaker && mode === 'accept') {
-          if (typeof breedValue === 'string') {
-            if (!values.includes(breedValue)) return null;
-          } else if (Array.isArray(breedValue)) {
-            if (!values.some(v => breedValue.includes(v))) return null;
-          } else if (typeof breedValue === 'number') {
-            // numeric accept: require exact match
-            if (!values.includes(breedValue)) return null;
+        // Dealbreaker exclusion
+        if (dealbreaker) {
+          if (
+            (mode === 'exclude' && matchValue(breedValue, values)) ||
+            (mode === 'accept'  && !matchValue(breedValue, values))
+          ) {
+            if (DEBUG_MODE) {
+              reasons.push(`${breed.name} excluded due to dealbreaker (${trait}) mode=${mode}`);
+            }
+            return null; // exclude breed entirely
           }
         }
 
-        // If this trait was exclude-dealbreaker and breed passed (i.e., breedValue not excluded), skip scoring entirely (neutral)
-        if (dealbreaker && mode === 'exclude') {
-          if (includeBreakdown) {
-            breakdown.push({
-              trait,
-              userValue: userValuesRaw,
-              breedValue,
-              weight,
-              traitScore: 0,
-              isDealbreaker: true,
-              mode,
-              priority
-            });
-          }
-          continue; // do not add to score or reasons
-        }
-
-        // Scoring
+        // Score this trait
         let traitScore = 0;
-
         if (breedValue !== undefined) {
           if (typeof breedValue === 'number') {
-            const diffs = values.map(val => Math.abs(breedValue - val));
+            // numeric → use closest value
+            const diffs = values.map(v => Math.abs(breedValue - Number(v)));
             const minDiff = Math.min(...diffs);
             traitScore = Math.max(0, (5 - minDiff)) * weight;
             if (minDiff > 0) {
-              reasons.push(
-                `${breed.name}'s ${traitLabels[trait] || trait} differs from your preference`
-              );
+              reasons.push(`${breed.name}'s ${traitLabels[trait] || trait} differs from your preference`);
             }
           } else if (typeof breedValue === 'string') {
-            if (values.includes(breedValue)) {
-              traitScore = 5 * weight;
-            } else {
-              traitScore = 0;
-              reasons.push(
-                `${breed.name}'s ${traitLabels[trait] || trait} differs from your preference`
-              );
+            traitScore = values.includes(breedValue) ? 5 * weight : 0;
+            if (!values.includes(breedValue)) {
+              reasons.push(`${breed.name}'s ${traitLabels[trait] || trait} differs from your preference`);
             }
           } else if (Array.isArray(breedValue)) {
-            if (values.some(val => breedValue.includes(val))) {
-              traitScore = 5 * weight;
-            } else {
-              traitScore = 0;
-              reasons.push(
-                `${breed.name}'s ${traitLabels[trait] || trait} does not match your choices`
-              );
+            traitScore = values.some(v => breedValue.includes(v)) ? 5 * weight : 0;
+            if (!values.some(v => breedValue.includes(v))) {
+              reasons.push(`${breed.name}'s ${traitLabels[trait] || trait} does not match your choices`);
             }
           }
-
           score += traitScore;
         }
 
@@ -164,7 +136,9 @@ async function matchBreeds(answers, includeBreakdown = false) {
             trait,
             userValue: userValuesRaw,
             breedValue,
-            weight,
+            baseWeight: baseWeight(priority),
+            dampen: ENABLE_MULTI_DAMPEN ? dampenFactor(userValuesRaw) : 1,
+            weightUsed: Math.round(weight * 100) / 100,
             traitScore: Math.round(traitScore * 100) / 100,
             isDealbreaker: !!dealbreaker,
             mode,
@@ -175,32 +149,23 @@ async function matchBreeds(answers, includeBreakdown = false) {
 
       if (score === 0) return null;
 
-      const matchPercentage =
-        totalPossibleScore > 0
-          ? Math.min(100, Math.round((score / totalPossibleScore) * 100))
-          : 0;
+      const matchPercentage = totalPossibleScore > 0
+        ? Math.min(100, Math.round((score / totalPossibleScore) * 100))
+        : 0;
 
       const result = {
         breed: breed.name,
         matchPercentage,
         reasons: [...new Set(reasons)]
       };
-
-      if (includeBreakdown) {
-        result.breakdown = breakdown;
-      }
+      if (includeBreakdown) result.breakdown = breakdown;
 
       if (DEBUG_MODE) {
         console.log(`\n🐶 Breed: ${breed.name}`);
         console.log(`Match Percentage: ${matchPercentage}%`);
-        if (includeBreakdown) {
-          console.log('Breakdown:', breakdown);
-        }
-        if (reasons.length > 0) {
-          console.log('⚠️ Reasons:', reasons);
-        } else {
-          console.log('🌟 Perfect match with your preferences!');
-        }
+        if (includeBreakdown) console.log('Breakdown:', breakdown);
+        if (result.reasons.length) console.log('⚠️ Reasons:', result.reasons);
+        else console.log('🌟 Perfect match with your preferences!');
       }
 
       return result;
@@ -210,6 +175,15 @@ async function matchBreeds(answers, includeBreakdown = false) {
     .slice(0, 3);
 
   return scoredBreeds;
+}
+
+// helper: does breedValue match any of values?
+function matchValue(breedValue, values) {
+  if (breedValue === undefined) return false;
+  if (Array.isArray(breedValue)) {
+    return values.some(v => breedValue.includes(v));
+  }
+  return values.includes(breedValue);
 }
 
 module.exports = { matchBreeds };

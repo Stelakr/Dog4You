@@ -1,16 +1,28 @@
-// /routes/llm.js
+// /backend/routes/llm.js
 const express = require('express');
 const router = express.Router();
 const {
   explainTrait,
   whyMatch,
   whyNot,
-  careTips
+  careTips,
+  suggestBreed
 } = require('../controllers/llmController');
 
-router.post('/explainTrait', explainTrait);
-router.post('/whyMatch', whyMatch);
-router.post('/whyNot', whyNot);
-router.post('/careTips', careTips);
+const {
+  validateExplainTrait,
+  validateWhyMatch,
+  validateWhyNot,
+  validateCareTips,
+  validateSuggestBreed
+} = require('../utils/requestValidators');
+
+const handleValidation = require('../utils/handleValidations');
+
+router.post('/explainTrait', validateExplainTrait, handleValidation, explainTrait);
+router.post('/whyMatch',     validateWhyMatch,     handleValidation, whyMatch);
+router.post('/whyNot',       validateWhyNot,       handleValidation, whyNot);
+router.post('/careTips',     validateCareTips,     handleValidation, careTips);
+router.post('/suggestBreed', validateSuggestBreed, handleValidation, suggestBreed);
 
 module.exports = router;

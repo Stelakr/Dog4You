@@ -109,9 +109,25 @@ const whyNot = async (req, res, next) => {
   }
 };
 
+const suggestBreed = async (req, res, next) => {
+  try {
+    const { input } = req.body;
+    if (!input) {
+      return res.status(400).json({ success: false, error: 'Input is required' });
+    }
+    const suggestion = await callLLM('suggestBreed', { input });
+    res.json({ success: true, data: suggestion.trim() });
+  } catch (err) {
+    console.error('𝐋𝐋𝐌 suggestBreed error:', err);
+    next(err);
+  }
+};
+
+
 module.exports = {
   explainTrait,
   whyMatch,
   careTips,
-  whyNot
+  whyNot,
+  suggestBreed
 };

@@ -1,108 +1,229 @@
 // /backend/services/llm.js
 const OpenAI = require('openai');
+const path = require('path');
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const explanationCache = {}; // simple in-memory cache for trait explanations
-
-// Helper to call the OpenAI chat completion
+// Allow easy model swap via env
 const MODEL = process.env.LLM_MODEL || 'gpt-4o';
 
-async function openAIChat(messages, temperature = 0.65, model = MODEL) {
-  const response = await openai.chat.completions.create({
-    model,
-    messages,
-    temperature
-  });
-  return response.choices[0].message.content.trim();
+// Small, safe timeout wrapper
+function withTimeout(promise, ms = 15000) {
+  return Promise.race([
+    promise,
+    new Promise((_, rej) => setTimeout(() => rej(new Error('LLM timeout')), ms))
+  ]);
 }
 
+// One place to call OpenAI
+async function openAIChat(messages, { temperature = 0.4, max_tokens = 700, model = MODEL, timeoutMs = 15000 } = {}) {
+  const call = openai.chat.completions.create({
+    model,
+    messages,
+    temperature,
+    max_tokens
+  });
+  const res = await withTimeout(call, timeoutMs);
+  return res.choices[0].message.content.trim();
+}
+
+// Try to load backend trait explanations (used as grounding context)
+let traitMeta = {};
+try {
+  // IMPORTANT: this is your backend util, not the frontend one
+  traitMeta = require('../utils/traitExplanations');
+} catch (_) {
+  // ok if missing
+}
+
+// House rules for *all* answers (welfare-first, no hallucinations)
+const BASE_SYSTEM = `
+You are Dog4You's breed guidance assistant.
+Non-negotiables:
+- Prioritize the dog's wellbeing and long-term welfare over user wishes.
+- Ground advice in verified breed standards (AKC-style or similar).
+- If information is uncertain or not in the provided context, say "I'm not sure" and suggest talking to a vet or reputable breeder.
+- Respect dealbreakers explicitly. If a user excluded a trait, make that clear.
+- Be concise, clear, and kind. Avoid medical advice beyond general care guidance.
+`;
+
+// Turn raw answers into a concise, structured summary
+function summarizeAnswers(answers = []) {
+  if (!Array.isArray(answers)) return 'No answers.';
+  const parts = answers.map(a => {
+    const trait = a.trait;
+    const val = Array.isArray(a.value) ? a.value.join(', ') : a.value;
+    const flags = [
+      a.dealbreaker ? (a.mode === 'exclude' ? 'EXCLUDE' : 'ACCEPT_ONLY') : null,
+      a.priority === 'high' ? 'HIGH' : a.priority === 'low' ? 'FLEX' : null
+    ].filter(Boolean);
+    return `${trait} = ${val}${flags.length ? ` [${flags.join(',')}]` : ''}`;
+  });
+  const dealbreakers = answers.filter(a => a.dealbreaker);
+  return `Selections: ${parts.join('; ')}.\nDealbreakers: ${dealbreakers.length ? dealbreakers.map(a => `${a.trait} (${a.mode})`).join(', ') : 'none'}.`;
+}
+
+// Optional: tiny trait grounding snippet for explainTrait
+function traitGroundingSnippet(trait) {
+  const t = traitMeta?.[trait];
+  if (!t) return '';
+  const values = t.values
+    ? ` Allowed values: ${Object.entries(t.values).map(([k, v]) => `${k}=${v}`).join(', ')}.`
+    : '';
+  return `Definition hint — ${t.label || trait}: ${t.explanation || ''}.${values}`;
+}
+
+/* =========================
+   Specific helper prompts
+   ========================= */
 
 async function explainTrait({ trait }) {
-  if (explanationCache[trait]) {
-    return explanationCache[trait];
-  }
+  const system = BASE_SYSTEM;
+  const user = `
+Explain the dog trait "${trait}" for someone choosing a breed.
+${traitGroundingSnippet(trait)}
 
-  const systemPrompt = 'You are a helpful dog expert assistant.';
-  const userPrompt = `Explain the dog trait "${trait}" in a friendly and informative way for someone choosing a breed. Focus on what it means, tradeoffs, and how a typical dog might behave.`;
-
-  const explanation = await openAIChat(
+Requirements:
+- 3–5 sentences max.
+- Describe what the trait means in practical daily life.
+- Mention a tradeoff (pro/cons) and when it matters most.
+- Avoid brand-new facts not in standard breed guidance.
+`;
+  return openAIChat(
     [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
+      { role: 'system', content: system },
+      { role: 'user', content: user }
     ],
-    0.7 // temperature
+    { temperature: 0.45, max_tokens: 280 }
   );
-
-
-  explanationCache[trait] = explanation;
-  return explanation;
 }
 
 async function whyMatch({ breed, matchPercentage, answersSummary, answers }) {
-  const systemPrompt =
-    'You are a dog expert assistant trained to prioritize the wellbeing of the dog by matching lifestyle and owner capabilities. Be clear, concise, and responsible. Understand dealbreaker modes: "accept" means only those values count; "exclude" means those values were filtered out and are neutral otherwise.';
+  const system = BASE_SYSTEM;
+  const user = `
+User was recommended "${breed}" at ${matchPercentage}%.
+User inputs:
+${answersSummary}
 
-  const userPrompt = `The user was recommended the breed "${breed}" with a match percentage of ${matchPercentage}%. Given these preferences: ${answersSummary}, explain why this breed is a good match. Mention strengths, any mild mismatches, and, if applicable, what tradeoffs were made around excluded values. Provide one actionable suggestion to refine preferences if they want even better alignment.`;
-
-  return await openAIChat(
+Write a short explanation:
+- Start with one sentence: why this breed fits overall.
+- Mention 1–2 strengths that align with inputs.
+- If there are mild mismatches, name them neutrally.
+- If any dealbreaker applies in ACCEPT_ONLY mode, acknowledge alignment explicitly.
+- End with ONE responsible tip to improve the match (exercise plan, grooming routine, training class), not salesy.
+- 6–9 sentences total. No bullet lists.
+`;
+  return openAIChat(
     [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
+      { role: 'system', content: system },
+      { role: 'user', content: user }
     ],
-    0.65
+    { temperature: 0.45, max_tokens: 420 }
   );
 }
 
-
 async function whyNot({ breed, answersSummary, answers }) {
-  const systemPrompt =
-    'You are a transparent dog expert assistant. Your job is to explain clearly why a breed was not a top match given the user’s exact expressed preferences. Pay special attention to dealbreaker semantics: distinguish between "accept" dealbreakers (only these are allowed) and "exclude" dealbreakers (these values are disallowed and should not be confused with preferences).';
+  // Detect if the breed would have been excluded by any EXCLUDE dealbreaker (best-effort heuristic on text)
+  // We keep prompts authoritative: LLM must state if excluded by dealbreaker.
+  const system = BASE_SYSTEM;
+  const user = `
+The user expected "${breed}", but it was not a top match.
+User inputs:
+${answersSummary}
 
-  // Build a structured extra note for the model
-  const dealbreakerDetails = answers
-    .filter(a => a.dealbreaker)
-    .map(a => {
-      const modeDesc = a.mode === 'exclude' ? 'excluded (must not have)' : 'accepted only';
-      return `Trait "${a.trait}" is a dealbreaker: ${modeDesc} value(s) ${JSON.stringify(a.value)}.`;
-    })
-    .join(' ');
-
-  const userPrompt = `The user expected the breed "${breed}" but it was not a top match. Given these preferences: ${answersSummary}. ${dealbreakerDetails} Explain why this breed did not rank higher. Highlight specific mismatches, conflicting priorities, or dealbreaker exclusions. If there is a realistic way for the user to adjust preferences to get closer to this breed, mention that. Do not contradict the dealbreaker exclusion semantics (e.g., if "high energy" was excluded, do not say high energy aligns).`;
-
-  return await openAIChat(
+Write a clear, respectful explanation:
+- If any EXCLUDE dealbreaker conflicts with typical "${breed}" traits, lead with that: "This breed was ruled out due to your dealbreaker on …".
+- Otherwise, list the main mismatches (2–3), tied to the user's choices.
+- Do NOT invent facts. If uncertain, say so briefly.
+- Finish with a realistic alternative approach (e.g., similar breed/type with better fit) or a reflective tip.
+- 5–8 sentences, no bullets.
+`;
+  return openAIChat(
     [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
+      { role: 'system', content: system },
+      { role: 'user', content: user }
     ],
-    0.65
+    { temperature: 0.45, max_tokens: 420 }
   );
 }
 
 async function careTips({ breed }) {
-  const systemPrompt =
-    'You are a responsible dog-care expert. Provide welfare-oriented advice.';
-  const userPrompt = `Provide responsible care advice for a ${breed}. Cover exercise needs, grooming, common health considerations, and how to match this breed to an owner's lifestyle for long-term wellbeing.`;
+  const system = BASE_SYSTEM;
+  const user = `
+Provide responsible care guidance for a ${breed}.
+Cover briefly (in 4–7 sentences, plain text):
+- Daily exercise and mental enrichment expectations.
+- Grooming basics (frequency; typical coat considerations).
+- Common health themes for the breed type (high-level, no medical advice).
+- A note on ethical sourcing (reputable breeder/rescue) and realistic owner commitment.
 
-  return await openAIChat(
+Avoid speculation. If unsure on a detail, write "If unsure, consult a vet or a reputable breed club."
+`;
+  return openAIChat(
     [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
+      { role: 'system', content: system },
+      { role: 'user', content: user }
     ],
-    0.65
+    { temperature: 0.4, max_tokens: 420 }
   );
 }
 
-// Unified entrypoint used by controllers
+// Normalizes misspellings; returns canonical name or "unknown"
+async function suggestBreed({ input }) {
+  const system = `
+You normalize dog breed names.
+Rules:
+- Return ONLY the canonical breed name (e.g., "Golden Retriever") OR the word "unknown".
+- If you're not reasonably confident, return "unknown".
+- Do not add punctuation or extra words.
+`;
+  const user = `User entered: "${input}"`;
+  return openAIChat(
+    [
+      { role: 'system', content: system },
+      { role: 'user', content: user }
+    ],
+    { temperature: 0.2, max_tokens: 15 }
+  );
+}
+
+/* =========================
+   Unified dispatcher
+   ========================= */
 async function callLLM(type, payload) {
+  const answersSummary = payload?.answers ? summarizeAnswers(payload.answers) : undefined;
+
   switch (type) {
     case 'explainTrait':
       return explainTrait(payload);
+
     case 'whyMatch':
-      return whyMatch(payload);
+      // ensure consistent summary is passed
+      return whyMatch({
+        ...payload,
+        answersSummary: payload.answersSummary || answersSummary
+      });
+
     case 'whyNot':
-      return whyNot(payload);
+      return whyNot({
+        ...payload,
+        answersSummary: payload.answersSummary || answersSummary
+      });
+
     case 'careTips':
       return careTips(payload);
+
+    case 'suggestBreed':
+      return suggestBreed(payload);
+
+    // Keep an escape hatch if you ever need it
+    case 'custom':
+      return openAIChat(payload.messages, {
+        temperature: payload.temperature ?? 0.4,
+        max_tokens: payload.max_tokens ?? 400,
+        model: payload.model || MODEL
+      });
+
     default:
       throw new Error(`Unknown LLM call type: ${type}`);
   }
@@ -110,9 +231,9 @@ async function callLLM(type, payload) {
 
 module.exports = {
   callLLM,
-  // Exporting individual helpers if needed elsewhere
   explainTrait,
   whyMatch,
   whyNot,
-  careTips
+  careTips,
+  suggestBreed
 };

@@ -11,34 +11,38 @@ function Questionnaire() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [justHydrated, setJustHydrated] = useState(false);
-  const navigate = useNavigate();
 
-  // LLM trait explanation state
+  // LLM trait helper state
   const [llmTraitInfo, setLlmTraitInfo] = useState({});
   const [loadingTrait, setLoadingTrait] = useState({});
   const [llmError, setLlmError] = useState({});
 
-  // hydrate from localStorage
+  const navigate = useNavigate();
+
+  // ── Hydrate once from localStorage ──
   useEffect(() => {
     const stored = localStorage.getItem('dog4you_answers');
     const idx = localStorage.getItem('dog4you_currentIndex');
     if (stored) {
       try {
-        setAnswers(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        setAnswers(parsed);
         setJustHydrated(true);
       } catch {}
     }
     if (idx !== null) {
+      // If we have stored answers and index, continue. If not, start from 0.
       setCurrentIndex(Number(idx));
     }
   }, []);
 
-  // fetch questions
+  // ── Fetch questions ──
   useEffect(() => {
     async function fetchQuestions() {
       try {
-        const res = await api.get('/api/questions?limit=10');
-        setQuestions(res.data.data);
+        // For now, fetch a limited set while building flow
+        const res = await api.get('/api/questions?limit=10&sort=order');
+        setQuestions(res.data.data || []);
       } catch (err) {
         console.error('❌ Error fetching questions:', err);
         setError('Could not load questions. Please try again later.');
@@ -49,101 +53,112 @@ function Questionnaire() {
     fetchQuestions();
   }, []);
 
-  // persist answers & index
+  // ── Local persistence helper ──
   const persist = (newAnswers, newIndex) => {
     try {
       localStorage.setItem('dog4you_answers', JSON.stringify(newAnswers));
     } catch {}
-    if (newIndex !== undefined) {
+    if (typeof newIndex === 'number') {
       localStorage.setItem('dog4you_currentIndex', String(newIndex));
     }
   };
 
-  // update helper
-  const updateAnswerState = (trait, newPartial) => {
+  // ── Update a trait’s answer safely ──
+  const updateAnswerState = (trait, patch) => {
     setAnswers(prev => {
-      const updated = {
+      const next = {
         ...prev,
         [trait]: {
-          ...prev[trait],
-          ...newPartial
+          value: prev[trait]?.value,
+          dealbreaker: prev[trait]?.dealbreaker || false,
+          mode: prev[trait]?.mode || 'accept',
+          priority: prev[trait]?.priority || 'medium',
+          ...patch
         }
       };
-      persist(updated);
-      return updated;
+      persist(next);
+      return next;
     });
   };
 
-  // toggle multi-value (checkbox-style)
+  // ── Toggle a value (multi-select by default) ──
   const toggleValue = (trait, value) => {
     setAnswers(prev => {
       const existing = prev[trait]?.value;
       let newValue;
       if (Array.isArray(existing)) {
-        if (existing.includes(value)) {
-          newValue = existing.filter(v => v !== value);
-        } else {
-          newValue = [...existing, value];
-        }
+        newValue = existing.includes(value)
+          ? existing.filter(v => v !== value)
+          : [...existing, value];
       } else if (existing !== undefined) {
-        if (existing === value) newValue = [];
+        // was single → become array
+        if (existing === value) newValue = []; // unselect
         else newValue = [existing, value];
       } else {
         newValue = [value];
       }
 
-      const updated = {
+      const next = {
         ...prev,
         [trait]: {
-          ...prev[trait],
           value: newValue,
-          priority: prev[trait]?.priority || 'medium',
           dealbreaker: prev[trait]?.dealbreaker || false,
-          mode: prev[trait]?.mode || 'accept'
+          mode: prev[trait]?.mode || 'accept',
+          priority: prev[trait]?.priority || 'medium'
         }
       };
-      persist(updated);
-      return updated;
+      persist(next);
+      return next;
     });
   };
 
+  // ── Dealbreaker / Flexible mutual exclusivity ──
   const toggleDealbreaker = (trait, checked) => {
     updateAnswerState(trait, {
       dealbreaker: checked,
-      mode: 'accept',
-      priority: checked ? 'medium' : (answers[trait]?.priority || 'medium')
+      mode: 'accept', // default mode when enabling dealbreaker
+      // don’t force “high” here; scoring weight is separate from dealbreaker exclusion
+      priority: checked ? (answers[trait]?.priority || 'medium') : (answers[trait]?.priority || 'medium')
     });
+  };
+
+  const setDealbreakerMode = (trait, mode) => {
+    updateAnswerState(trait, { mode });
   };
 
   const toggleFlexible = (trait, checked) => {
     updateAnswerState(trait, {
       priority: checked ? 'low' : 'medium',
+      // if making flexible, ensure dealbreaker is off
       dealbreaker: checked ? false : (answers[trait]?.dealbreaker || false)
     });
   };
 
-  const setDealbreakerMode = (trait, mode) => {
-    updateAnswerState(trait, {
-      mode
-    });
+  // ── LLM: explain current trait ──
+  const fetchTraitExplanation = async (trait) => {
+    setLoadingTrait(prev => ({ ...prev, [trait]: true }));
+    setLlmError(prev => ({ ...prev, [trait]: null }));
+    try {
+      const res = await api.post('/api/llm/explainTrait', { trait });
+      setLlmTraitInfo(prev => ({ ...prev, [trait]: res.data.data }));
+    } catch (err) {
+      setLlmError(prev => ({ ...prev, [trait]: 'Failed to load explanation.' }));
+    } finally {
+      setLoadingTrait(prev => ({ ...prev, [trait]: false }));
+    }
   };
 
-  const skipCurrent = () => {
-    goNext();
-  };
-
+  // ── Navigation ──
   const goNext = () => {
     const next = Math.min(questions.length - 1, currentIndex + 1);
     setCurrentIndex(next);
     persist(answers, next);
   };
-
   const goBack = () => {
     const prev = Math.max(0, currentIndex - 1);
     setCurrentIndex(prev);
     persist(answers, prev);
   };
-
   const resetAll = () => {
     localStorage.removeItem('dog4you_answers');
     localStorage.removeItem('dog4you_currentIndex');
@@ -152,30 +167,21 @@ function Questionnaire() {
     setJustHydrated(false);
   };
 
-  // Fetch trait explanation from backend
-  const fetchTraitExplanation = async (trait) => {
-    setLoadingTrait(prev => ({ ...prev, [trait]: true }));
-    setLlmError(prev => ({ ...prev, [trait]: null }));
-    try {
-      const res = await api.post('/api/llm/explainTrait', { trait });
-      setLlmTraitInfo(prev => ({ ...prev, [trait]: res.data.data }));
-    } catch (err) {
-      console.error('LLM trait explain error:', err);
-      setLlmError(prev => ({ ...prev, [trait]: 'Failed to load explanation.' }));
-    } finally {
-      setLoadingTrait(prev => ({ ...prev, [trait]: false }));
-    }
-  };
-
+  // ── Submit ──
   const handleSubmit = async () => {
+    // Only send answered traits with a non-empty value
     const formattedAnswers = Object.entries(answers)
-      .filter(([_, ans]) => ans && ans.value !== undefined && !(Array.isArray(ans.value) && ans.value.length === 0))
-      .map(([trait, answerObj]) => ({
+      .filter(([_, a]) => {
+        if (!a) return false;
+        if (Array.isArray(a.value)) return a.value.length > 0;
+        return a.value !== undefined && a.value !== null && a.value !== '';
+      })
+      .map(([trait, a]) => ({
         trait,
-        value: answerObj.value,
-        dealbreaker: answerObj.dealbreaker || false,
-        mode: answerObj.mode || 'accept',
-        priority: answerObj.priority || 'medium'
+        value: a.value,
+        dealbreaker: !!a.dealbreaker,
+        mode: a.mode || 'accept',
+        priority: a.priority || 'medium'
       }));
 
     if (formattedAnswers.length === 0) {
@@ -185,6 +191,7 @@ function Questionnaire() {
 
     try {
       const res = await api.post('/api/recommend', { answers: formattedAnswers });
+      // Pass rawAnswers for LLM explanations on Results
       navigate('/results', { state: { results: res.data.data, rawAnswers: formattedAnswers } });
     } catch (err) {
       console.error('❌ Recommendation error:', err);
@@ -222,8 +229,11 @@ function Questionnaire() {
           }}
         >
           <div>
-            You have saved answers. Continuing will keep them.{' '}
-            <button onClick={resetAll} style={{ textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}>
+            Saved progress loaded.{' '}
+            <button
+              onClick={resetAll}
+              style={{ textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+            >
               Clear all
             </button>
           </div>
@@ -231,6 +241,7 @@ function Questionnaire() {
         </div>
       )}
 
+      {/* Progress */}
       <div style={{ marginBottom: 8 }}>
         <div style={{ fontSize: 14, marginBottom: 4 }}>
           Question {currentIndex + 1} of {total}
@@ -252,16 +263,15 @@ function Questionnaire() {
             }}
           />
         </div>
-        <div style={{ fontSize: 12, marginBottom: 4, color: '#555' }}>
-          You don’t have to answer every question, but the more you share, the better the match.
-        </div>
       </div>
 
+      {/* Card */}
       <div style={{ padding: 16, border: '1px solid #ccc', borderRadius: 10, marginBottom: 16, background: '#fafafa' }}>
         <p style={{ margin: '0 0 8px' }}>
           <b>{current.text}</b>
         </p>
 
+        {/* Options: always checkboxes (multi-select) */}
         <div style={{ marginBottom: 8 }}>
           {current.options.map((opt, idx) => {
             const isSelected = Array.isArray(userAnswer.value)
@@ -282,6 +292,7 @@ function Questionnaire() {
           })}
         </div>
 
+        {/* Toggles */}
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 8 }}>
           <div>
             <label style={{ display: 'block', marginBottom: 4 }}>
@@ -315,11 +326,6 @@ function Questionnaire() {
                   />{' '}
                   Exclude selected
                 </label>
-                {userAnswer.mode === 'exclude' && (
-                  <div style={{ fontSize: 11, marginTop: 4, color: '#444' }}>
-                    Breeds with this value will be excluded; others won’t be penalized.
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -341,17 +347,22 @@ function Questionnaire() {
           </div>
         </div>
 
+        {/* Trait Info & LLM */}
         {traitExplanations[current.trait] && (
           <div style={{ marginTop: 8, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <button
-              onClick={() => fetchTraitExplanation(current.trait)}
-              disabled={loadingTrait[current.trait]}
-              style={{ padding: '6px 12px' }}
+              onClick={() => alert(traitExplanations[current.trait].explanation)}
+              title="Static explanation"
             >
-              {loadingTrait[current.trait] ? 'Thinking...' : '🤖 Ask More'}
+              ℹ️ What does this mean?
             </button>
+
+            <button onClick={() => fetchTraitExplanation(current.trait)} disabled={loadingTrait[current.trait]}>
+              {loadingTrait[current.trait] ? 'Thinking…' : '🤖 Ask More'}
+            </button>
+
             {llmTraitInfo[current.trait] && (
-              <div style={{ marginTop: 8, background: '#fff', padding: 10, borderRadius: 6, flex: 1 }}>
+              <div style={{ marginTop: 8, background: '#fff', padding: 10, borderRadius: 6, width: '100%' }}>
                 <strong>Assistant:</strong> {llmTraitInfo[current.trait]}
               </div>
             )}
@@ -362,6 +373,7 @@ function Questionnaire() {
         )}
       </div>
 
+      {/* Nav */}
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
         <div>
           <button onClick={goBack} disabled={currentIndex === 0} style={{ padding: '8px 14px' }}>
@@ -369,14 +381,15 @@ function Questionnaire() {
           </button>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={skipCurrent} style={{ padding: '8px 14px' }}>
-            Next →
-          </button>
           {currentIndex === total - 1 ? (
             <button onClick={handleSubmit} style={{ padding: '8px 14px' }}>
               Submit & See Matches
             </button>
-          ) : null}
+          ) : (
+            <button onClick={goNext} style={{ padding: '8px 14px' }}>
+              Next →
+            </button>
+          )}
         </div>
       </div>
     </div>
