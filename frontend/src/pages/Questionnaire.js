@@ -63,7 +63,7 @@ function Questionnaire() {
     }
   };
 
-  // ── Update a trait’s answer safely ──
+ 
   const updateAnswerState = (trait, patch) => {
     setAnswers(prev => {
       const next = {
@@ -72,7 +72,6 @@ function Questionnaire() {
           value: prev[trait]?.value,
           dealbreaker: prev[trait]?.dealbreaker || false,
           mode: prev[trait]?.mode || 'accept',
-          priority: prev[trait]?.priority || 'medium',
           ...patch
         }
       };
@@ -104,7 +103,6 @@ function Questionnaire() {
           value: newValue,
           dealbreaker: prev[trait]?.dealbreaker || false,
           mode: prev[trait]?.mode || 'accept',
-          priority: prev[trait]?.priority || 'medium'
         }
       };
       persist(next);
@@ -117,8 +115,7 @@ function Questionnaire() {
     updateAnswerState(trait, {
       dealbreaker: checked,
       mode: 'accept', // default mode when enabling dealbreaker
-      // don’t force “high” here; scoring weight is separate from dealbreaker exclusion
-      priority: checked ? (answers[trait]?.priority || 'medium') : (answers[trait]?.priority || 'medium')
+      //priority: checked ? (answers[trait]?.priority || 'medium') : (answers[trait]?.priority || 'medium')
     });
   };
 
@@ -126,13 +123,6 @@ function Questionnaire() {
     updateAnswerState(trait, { mode });
   };
 
-  const toggleFlexible = (trait, checked) => {
-    updateAnswerState(trait, {
-      priority: checked ? 'low' : 'medium',
-      // if making flexible, ensure dealbreaker is off
-      dealbreaker: checked ? false : (answers[trait]?.dealbreaker || false)
-    });
-  };
 
   // ── LLM: explain current trait ──
   const fetchTraitExplanation = async (trait) => {
@@ -181,7 +171,6 @@ function Questionnaire() {
         value: a.value,
         dealbreaker: !!a.dealbreaker,
         mode: a.mode || 'accept',
-        priority: a.priority || 'medium'
       }));
 
     if (formattedAnswers.length === 0) {
@@ -300,7 +289,7 @@ function Questionnaire() {
                 type="checkbox"
                 checked={userAnswer.dealbreaker || false}
                 onChange={(e) => toggleDealbreaker(current.trait, e.target.checked)}
-                disabled={userAnswer.priority === 'low'}
+                //disabled={userAnswer.priority === 'low'}
                 style={{ marginRight: 6 }}
               />
               Dealbreaker
@@ -329,23 +318,8 @@ function Questionnaire() {
               </div>
             )}
           </div>
+        </div>    
 
-          <div>
-            <label style={{ display: 'block', marginBottom: 4 }}>
-              <input
-                type="checkbox"
-                checked={userAnswer.priority === 'low'}
-                onChange={(e) => toggleFlexible(current.trait, e.target.checked)}
-                disabled={userAnswer.dealbreaker}
-                style={{ marginRight: 6 }}
-              />
-              Flexible (lower priority)
-            </label>
-            <div style={{ fontSize: 11, color: '#555' }}>
-              Flexible traits slightly influence matching instead of dominating.
-            </div>
-          </div>
-        </div>
 
         {/* Trait Info & LLM */}
         {traitExplanations[current.trait] && (

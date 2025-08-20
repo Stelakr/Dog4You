@@ -4,6 +4,23 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { traitExplanations, traitLabel, valueLabel } from '../utils/traitExplanations';
 
+// --- sessionStorage helpers (persist explanations across refreshes) ---
+const SS_KEYS = {
+  whyMatch:   'dog4you_whyMatchInfo',
+  careTips:   'dog4you_careTipsInfo',
+  whyNot:     'dog4you_whyNotInfo',
+  input:      'dog4you_whyNotInput',
+  suggestion: 'dog4you_suggestion',
+  exclusion:  'dog4you_exclusionBanner',
+  resultsSig: 'dog4you_resultsSig',
+};
+
+const loadJSON = (k, fallback) => {
+  try { const s = sessionStorage.getItem(k); return s ? JSON.parse(s) : fallback; }
+  catch { return fallback; }
+};
+const saveJSON = (k, v) => { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
 
 function Results() {
   const location = useLocation();
@@ -12,20 +29,54 @@ function Results() {
   const rawAnswers = location.state?.rawAnswers || [];
 
   // ─── State ───────────────────────────────────────────────────────
-  const [whyMatchInfo, setWhyMatchInfo]       = useState({});
-  const [whyNotInfo, setWhyNotInfo]           = useState('');
+  //const [whyMatchInfo, setWhyMatchInfo]       = useState({});
+  //const [whyNotInfo, setWhyNotInfo]           = useState('');
   const [loadingWhyMatch, setLoadingWhyMatch] = useState({});
   const [loadingWhyNot, setLoadingWhyNot]     = useState(false);
-  const [careTipsInfo, setCareTipsInfo]       = useState({});
+  //const [careTipsInfo, setCareTipsInfo]       = useState({});
   const [loadingCareTips, setLoadingCareTips] = useState({});
   const [breedDetailsCache, setBreedDetailsCache]     = useState({});
-  const [exclusionBannerText, setExclusionBannerText] = useState('');
+  //const [exclusionBannerText, setExclusionBannerText] = useState('');
+
+  const [whyMatchInfo, setWhyMatchInfo]       = useState(() => loadJSON(SS_KEYS.whyMatch, {}));
+  const [careTipsInfo, setCareTipsInfo]       = useState(() => loadJSON(SS_KEYS.careTips, {}));
+  const [whyNotInfo, setWhyNotInfo]           = useState(() => loadJSON(SS_KEYS.whyNot, ''));
+  const [inputValue, setInputValue]           = useState(() => loadJSON(SS_KEYS.input, ''));
+  const [suggestion, setSuggestion]           = useState(() => loadJSON(SS_KEYS.suggestion, ''));
+  const [exclusionBannerText, setExclusionBannerText]       = useState(() => loadJSON(SS_KEYS.exclusion, ''));
 
   // For autocomplete + “why not” flow
   const [allBreedNames, setAllBreedNames]     = useState([]);
-  const [inputValue, setInputValue]           = useState(''); // raw textbox value
+  //const [inputValue, setInputValue]           = useState(''); // raw textbox value
   const [submittedBreed, setSubmittedBreed]   = useState(''); // last submitted/selected breed
-  const [suggestion, setSuggestion]           = useState(''); // did-you-mean value
+  //const [suggestion, setSuggestion]           = useState(''); // did-you-mean value
+
+  // A stable signature of the result set, order-insensitive:
+  const resultsSig = JSON.stringify(
+    [...new Set((results || []).map(r => (r.breed || '').toLowerCase()))].sort()
+  );
+
+  useEffect(() => {
+    const prev = sessionStorage.getItem(SS_KEYS.resultsSig);
+    if (prev && prev !== resultsSig) {
+      // Results changed → clear cached texts so we don’t show “poodle” notes for “collie”
+      setWhyMatchInfo({});
+      setCareTipsInfo({});
+      setWhyNotInfo('');
+      setSuggestion('');
+      setExclusionBannerText('');
+    }
+    sessionStorage.setItem(SS_KEYS.resultsSig, resultsSig);
+  }, [resultsSig]);
+
+
+  useEffect(() => saveJSON(SS_KEYS.whyMatch,   whyMatchInfo),        [whyMatchInfo]);
+  useEffect(() => saveJSON(SS_KEYS.careTips,   careTipsInfo),        [careTipsInfo]);
+  useEffect(() => saveJSON(SS_KEYS.whyNot,     whyNotInfo),          [whyNotInfo]);
+  useEffect(() => saveJSON(SS_KEYS.input,      inputValue),          [inputValue]);
+  useEffect(() => saveJSON(SS_KEYS.suggestion, suggestion),          [suggestion]);
+  useEffect(() => saveJSON(SS_KEYS.exclusion,  exclusionBannerText), [exclusionBannerText]);
+
 
   // ─── Redirect if missing context ────────────────────────────────
   useEffect(() => {
@@ -180,11 +231,13 @@ function Results() {
   };
 
   // ─── Retry / Start over ─────────────────────────────────────────
-  const handleTryAgain = () => {
-    localStorage.removeItem('dog4you_answers');
-    localStorage.removeItem('dog4you_currentIndex');
-    navigate('/questionnaire');
-  };
+const handleTryAgain = () => {
+  localStorage.removeItem('dog4you_answers');
+  localStorage.removeItem('dog4you_currentIndex');
+  Object.values(SS_KEYS).forEach(k => sessionStorage.removeItem(k)); // ← add this line
+  navigate('/questionnaire');
+};
+
 
   // ─── Render ─────────────────────────────────────────────────────
   if (!results.length) {

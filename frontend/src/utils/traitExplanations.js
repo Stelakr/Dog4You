@@ -44,7 +44,17 @@ export const traitExplanations = {
     explanation: 'Typical warmth and bonding with household members.',
     values: { 1: 'Low', 2: 'Somewhat', 3: 'Moderate', 4: 'High', 5: 'Very High' }
   },
-  goodWithYoungChildren: {
+  barkingLevel: {
+    label: 'Barking',
+    explanation: 'How vocal the breed tends to be.',
+    values: { 1: 'Very Low', 2: 'Low', 3: 'Moderate', 4: 'High', 5: 'Very High' }
+  },
+  shedding: {
+    label: 'Shedding',
+    explanation: 'How much the breed sheds.',
+    values: { 1:'No to barely sheds', 2: 'Rarely sheds', 3: 'Moderate sheding', 4: 'High sheding', 5: 'Hair everywhere'}
+  },
+  goodWithKids: {
     label: 'Good with Children',
     explanation: 'Typical suitability and tolerance around young kids.',
     values: { 1: 'Poor', 2: 'Limited', 3: 'OK', 4: 'Good', 5: 'Excellent' }
@@ -90,16 +100,6 @@ export const traitExplanations = {
     label: 'Size',
     explanation: 'Virtual category derived from height.max.',
     values: { small: 'Small', medium: 'Medium', large: 'Large' }
-  },
-  shedding: {
-    label: 'Shedding',
-    explanation: 'How much the breed sheds.',
-    values: { 1: 'Very Low', 2: 'Low', 3: 'Moderate', 4: 'High', 5: 'Very High' }
-  },
-  barkingLevel: {
-    label: 'Barking',
-    explanation: 'How vocal the breed tends to be.',
-    values: { 1: 'Very Quiet', 2: 'Quiet', 3: 'Moderate', 4: 'Vocal', 5: 'Very Vocal' }
   },
   apartmentFriendly: {
     label: 'Apartment Friendly',

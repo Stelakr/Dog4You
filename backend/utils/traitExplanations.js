@@ -33,7 +33,7 @@ module.exports = {
     label: 'Affectionate with Family',
     explanation: 'This describes how loving and emotionally connected a dog typically is with its human family.'
   },
-  goodWithYoungChildren: {
+  goodWithKids: {
     label: 'Good with Children',
     explanation: 'Indicates how well a breed tends to behave around kids. Not all dogs tolerate loud noises, touching, or fast movement.'
   },

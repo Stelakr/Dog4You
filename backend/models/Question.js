@@ -23,10 +23,10 @@ const questionSchema = new mongoose.Schema({
   trait: {
     type: String,
     enum: [
-      'energyLevel', 'sizeCategory', 'goodWithKids', 'goodWithDogs',
+      'energyLevel', 'sizeCategory', 'goodWithKids', 'goodWithOtherDogs',
       'trainability', 'barkingLevel', 'droolingLevel',
       'opennessToStrangers', 'protectiveNature', 'adaptabilityLevel',
-      'playfulnessLevel', 'coatType', 'coatLength',
+      'playfulnessLevel', 'coatType', 'coatLength', 'affectionateWithFamily',
       'lifeExpectancy', 'weight', 'height', 'shedding',
       'groomingFrequency', 'apartmentFriendly', 'livingEnvironment'
     ],
@@ -44,15 +44,11 @@ const questionSchema = new mongoose.Schema({
     required: true
   },
 
-  allowDealbreaker: {
+/*   allowDealbreaker: {
     type: Boolean,
     default: true
-  },
+  }, */
 
-  allowNotImportant: {
-    type: Boolean,
-    default: true
-  },
 
   order: {
     type: Number,

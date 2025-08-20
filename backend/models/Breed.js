@@ -31,9 +31,11 @@ const breedSchema = new mongoose.Schema({
   },
 
   affectionateWithFamily: { type: Number, min: 1, max: 5 },
-  goodWithYoungChildren: { type: Number, min: 1, max: 5 },
+  goodWithKids: { type: Number, min: 1, max: 5 },
   goodWithOtherDogs: { type: Number, min: 1, max: 5 },
   droolingLevel: { type: Number, min: 1, max: 5 },
+  barkingLevel: { type: Number, min: 1, max: 5 },
+  shedding: { type: Number, min: 1, max: 5 },
   opennessToStrangers: { type: Number, min: 1, max: 5 },
   protectiveNature: { type: Number, min: 1, max: 5 },
   playfulnessLevel: { type: Number, min: 1, max: 5 },
@@ -89,8 +91,10 @@ breedSchema.pre('save', function (next) {
   next();
 });
 
-// Indexes for performance
-breedSchema.index({ name: 1 });
-breedSchema.index({ nameLower: 1 });
+// Indexes for performance;
+breedSchema.index({ energyLevel: 1 });
+breedSchema.index({ trainability: 1 });
+breedSchema.index({ barkingLevel: 1 });
+breedSchema.index({ shedding: 1 });
 
 module.exports = mongoose.model('Breed', breedSchema);

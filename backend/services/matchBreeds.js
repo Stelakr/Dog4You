@@ -1,6 +1,7 @@
 // /backend/services/matchBreeds.js
 const Breed = require('../models/Breed');
 
+
 const traitLabels = {
   energyLevel: "energy level",
   coatType: "coat type",
@@ -12,11 +13,14 @@ const traitLabels = {
   opennessToStrangers: "openness to strangers",
   protectiveNature: "protective nature",
   affectionateWithFamily: "affection with family",
-  goodWithYoungChildren: "compatibility with young children",
+  goodWithKids: "compatibility with children",
   goodWithOtherDogs: "compatibility with other dogs",
   droolingLevel: "drooling tendency",
+  barkingLevel: "barking level",
+  shedding: "shedding level",
   groomingFrequency: "grooming needs",
   sizeCategory: "size"
+  //goodWithYoungChildren: ""
 };
 
 // Debug toggle
@@ -26,12 +30,14 @@ const DEBUG_MODE = process.env.DEBUG_MODE === 'true';
 const ENABLE_MULTI_DAMPEN = process.env.ENABLE_MULTI_DAMPEN === 'true';
 const MULTI_SELECT_DAMPEN = Number(process.env.MULTI_SELECT_DAMPEN || 0.25);
 
-// Weight by priority
-function baseWeight(priority) {
+
+/* function baseWeight(priority) {
   if (priority === 'high') return 5;
   if (priority === 'low') return 0.5;
   return 2; // medium
-}
+} */
+
+const BASE_WEIGHT = 2;
 
 // Dampening factor given number of selected values
 function dampenFactor(values) {
@@ -41,15 +47,13 @@ function dampenFactor(values) {
   return 1 / (1 + MULTI_SELECT_DAMPEN * (k - 1));
 }
 
-// Compute the effective weight for an answer (priority * dampening)
 function effectiveWeight(answer) {
-  const w = baseWeight(answer.priority || 'medium');
-  return w * dampenFactor(answer.value);
+  return BASE_WEIGHT * dampenFactor(answer.value);
 }
 
 /**
  * Match breeds based on user answers.
- * @param {Array} answers - [{ trait, value, priority?, dealbreaker?, mode? }]
+ * @param {Array} answers - [{ trait, value, dealbreaker?, mode? }]
  * @param {boolean} includeBreakdown - include per-trait breakdown
  */
 async function matchBreeds(answers, includeBreakdown = false) {
@@ -72,7 +76,6 @@ async function matchBreeds(answers, includeBreakdown = false) {
           trait,
           value: userValuesRaw,
           dealbreaker,
-          priority = 'medium',
           mode = 'accept'
         } = answer;
 
@@ -136,13 +139,12 @@ async function matchBreeds(answers, includeBreakdown = false) {
             trait,
             userValue: userValuesRaw,
             breedValue,
-            baseWeight: baseWeight(priority),
+            baseWeight: BASE_WEIGHT,
             dampen: ENABLE_MULTI_DAMPEN ? dampenFactor(userValuesRaw) : 1,
             weightUsed: Math.round(weight * 100) / 100,
             traitScore: Math.round(traitScore * 100) / 100,
             isDealbreaker: !!dealbreaker,
-            mode,
-            priority
+            mode
           });
         }
       }

@@ -5,7 +5,7 @@ const path = require('path');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Allow easy model swap via env
-const MODEL = process.env.LLM_MODEL || 'gpt-4o';
+const MODEL = (process.env.LLM_MODEL || process.env.FT_MODEL || 'gpt-4o-mini').trim();
 
 // Small, safe timeout wrapper
 function withTimeout(promise, ms = 15000) {
@@ -16,15 +16,43 @@ function withTimeout(promise, ms = 15000) {
 }
 
 // One place to call OpenAI
-async function openAIChat(messages, { temperature = 0.4, max_tokens = 700, model = MODEL, timeoutMs = 15000 } = {}) {
-  const call = openai.chat.completions.create({
-    model,
-    messages,
-    temperature,
-    max_tokens
-  });
-  const res = await withTimeout(call, timeoutMs);
-  return res.choices[0].message.content.trim();
+// One place to call OpenAI
+async function openAIChat(
+  messages,
+  { temperature = 0.4, max_tokens = 700, model = MODEL, timeoutMs = 15000 } = {}
+) {
+  try {
+    const call = openai.chat.completions.create({
+      model: (model || MODEL).trim(),
+      messages,
+      temperature,
+      max_tokens
+    });
+    const res = await withTimeout(call, timeoutMs);
+    return res.choices[0].message.content.trim();
+  } catch (err) {
+    const msg = String(err?.error?.message || err?.message || '').toLowerCase();
+    const looksLikeModelProblem =
+      msg.includes('invalid model id') || msg.includes('does not exist') || msg.includes('no such model');
+
+    // Soft fallback to a known-good base model so the UI keeps working
+    if (looksLikeModelProblem) {
+      const fallback = (process.env.LLM_FALLBACK || 'gpt-4o-mini').trim();
+      try {
+        const call = openai.chat.completions.create({
+          model: fallback,
+          messages,
+          temperature,
+          max_tokens
+        });
+        const res = await withTimeout(call, timeoutMs);
+        return res.choices[0].message.content.trim();
+      } catch (e2) {
+        // if fallback also fails, bubble up original error
+      }
+    }
+    throw err;
+  }
 }
 
 // Try to load backend trait explanations (used as grounding context)
@@ -38,13 +66,15 @@ try {
 
 // House rules for *all* answers (welfare-first, no hallucinations)
 const BASE_SYSTEM = `
-You are Dog4You's breed guidance assistant.
-Non-negotiables:
-- Prioritize the dog's wellbeing and long-term welfare over user wishes.
-- Ground advice in verified breed standards (AKC-style or similar).
-- If information is uncertain or not in the provided context, say "I'm not sure" and suggest talking to a vet or reputable breeder.
-- Respect dealbreakers explicitly. If a user excluded a trait, make that clear.
-- Be concise, clear, and kind. Avoid medical advice beyond general care guidance.
+You are Dog4You, a dog-breed guidance assistant.
+Dog welfare is the top priority. Match breed needs to the owner’s real lifestyle and capabilities (time, energy, space, training, budget)—not wishes.
+Base answers on verified breed standards and typical traits (AKC-style sources). If unsure or missing info, say so briefly.
+Respect dealbreakers: if a breed conflicts with an EXCLUDE dealbreaker, say it clearly and do not recommend that breed.
+Be concise, kind, and practical. Offer one or two actionable tips when helpful; avoid long lectures unless asked.
+Health guidance must remain high-level; do not diagnose. It’s fine to note general breed tendencies and suggest discussing with a vet.
+Be transparent about tradeoffs and uncertainty. Individual dogs vary by breeding, upbringing, and training.
+Avoid exaggeration or hype. Explain mismatches plainly and suggest realistic alternatives when needed.
+Keep a neutral, welfare-first tone. Never invent facts.
 `;
 
 // Turn raw answers into a concise, structured summary
@@ -54,8 +84,7 @@ function summarizeAnswers(answers = []) {
     const trait = a.trait;
     const val = Array.isArray(a.value) ? a.value.join(', ') : a.value;
     const flags = [
-      a.dealbreaker ? (a.mode === 'exclude' ? 'EXCLUDE' : 'ACCEPT_ONLY') : null,
-      a.priority === 'high' ? 'HIGH' : a.priority === 'low' ? 'FLEX' : null
+      a.dealbreaker ? (a.mode === 'exclude' ? 'EXCLUDE' : 'ACCEPT_ONLY') : null
     ].filter(Boolean);
     return `${trait} = ${val}${flags.length ? ` [${flags.join(',')}]` : ''}`;
   });

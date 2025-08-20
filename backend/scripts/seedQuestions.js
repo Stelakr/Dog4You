@@ -3,56 +3,47 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const Question = require('../models/Question');
 
-const sampleQuestions = [
-  {
-    text: "How active do you want your dog to be?",
-    trait: "energyLevel",
-    category: "lifestyle",
-    options: [
-      { label: "Low energy", value: 2 },
-      { label: "Medium energy", value: 3 },
-      { label: "High energy", value: 5 }
-    ],
-    order: 1
-  },
-  {
-    text: "What coat type do you prefer?",
-    trait: "coatType",
-    category: "preferences",
-    options: [
-      { label: "Curly", value: "curly" },
-      { label: "Smooth", value: "smooth" },
-      { label: "Double", value: "double" }
-    ],
-    order: 2
-  },
-  {
-    text: "What kind of living environment do you have?",
-    trait: "livingEnvironment",
-    category: "constraints",
-    options: [
-      { label: "Urban", value: "urban" },
-      { label: "Suburban", value: "suburban" },
-      { label: "Rural", value: "rural" }
-    ],
-    order: 3
-  }
-];
+// single source of truth for questions
+const sampleQuestions = require('../data/questions_v1');
 
 (async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log("✅ Connected to DB");
+    console.log('✅ Connected to DB');
+
+    // basic sanity check & helpful diagnostics
+    if (!Array.isArray(sampleQuestions) || sampleQuestions.length === 0) {
+      throw new Error('questions_v1.js exported an empty array.');
+    }
+
+    // validate trait keys against schema enum to fail fast with clear message
+    const allowedTraits = new Set(
+      Question.schema.path('trait').enumValues
+    );
+
+    const bad = sampleQuestions
+      .filter(q => !q || !allowedTraits.has(q.trait));
+
+    if (bad.length) {
+      console.error('❌ Found questions with invalid trait keys:');
+      for (const q of bad) {
+        console.error(`   - text="${q?.text}" trait="${q?.trait}"`);
+      }
+      throw new Error('Invalid trait(s) detected. Update Question enum or fix data/questions_v1.js.');
+    }
 
     await Question.deleteMany({});
-    console.log("🧹 Old questions cleared");
+    console.log('🧹 Old questions cleared');
 
-    await Question.insertMany(sampleQuestions);
-    console.log("🌱 Sample questions seeded");
+    // optional: sort by order before insert (keeps it tidy)
+    const toInsert = [...sampleQuestions].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+    await Question.insertMany(toInsert);
+    console.log(`🌱 Inserted ${toInsert.length} questions`);
 
     process.exit(0);
   } catch (err) {
-    console.error("❌ Error seeding questions:", err);
+    console.error('❌ Error seeding questions:', err);
     process.exit(1);
   }
 })();

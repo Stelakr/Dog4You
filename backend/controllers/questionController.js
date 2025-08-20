@@ -47,8 +47,11 @@ const createQuestion = async (req, res, next) => {
                 errors: errors.array()
             });
         }
-        const { text, type, options, required, trait, category, order} = req.body;
-        const question = new Question({text, type, options, required, trait, category, order });
+        const { text, options, trait, category, order} = req.body;
+        const question = new Question({
+            text, options, trait, category, order
+            //allowDealbreaker, allowNotImportant
+        });
         const saved = await question.save();
 
         res.status(201).json({

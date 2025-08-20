@@ -2,7 +2,7 @@
 const { body } = require('express-validator');
 
 const ALLOWED_TRAITS = [
-  'energyLevel','sizeCategory','goodWithKids','goodWithDogs',
+  'energyLevel','sizeCategory','goodWithKids','goodWithOtherDogs',
   'trainability','barkingLevel','droolingLevel',
   'opennessToStrangers','protectiveNature','adaptabilityLevel',
   'playfulnessLevel','coatType','coatLength',
@@ -21,8 +21,6 @@ const validateRecommend = [
     if (!ok) throw new Error('value must be number/string or array of them');
     return true;
   }),
-  body('answers.*.priority').optional().isIn(['low','medium','high'])
-    .withMessage('priority must be low|medium|high'),
   body('answers.*.dealbreaker').optional().isBoolean(),
   body('answers.*.mode').optional().isIn(['accept','exclude'])
 ];

@@ -12,9 +12,10 @@ const safeNumber = (value) => {
 const allowedFilters = new Set([
   'energyLevel', 'trainability', 'droolingLevel', 'opennessToStrangers',
   'protectiveNature', 'playfulnessLevel', 'adaptabilityLevel',
-  'affectionateWithFamily', 'goodWithYoungChildren', 'goodWithOtherDogs',
-  'weight.min', 'weight.max', 'height.min', 'height.max',
-  'lifeExpectancy.min', 'lifeExpectancy.max', 'livingEnvironment',
+  'affectionateWithFamily', 'goodWithKids', 'goodWithOtherDogs',
+  'barkingLevel', 'shedding', 'weight.min', 'weight.max', 
+  'height.min', 'height.max', 'lifeExpectancy.min',  
+  'lifeExpectancy.max', 'livingEnvironment',
   'coatType', 'coatLength'
 ]);
 
@@ -39,7 +40,8 @@ router.get('/', async (req, res) => {
     const numericTraits = [
       'energyLevel', 'trainability', 'droolingLevel', 'opennessToStrangers',
       'protectiveNature', 'playfulnessLevel', 'adaptabilityLevel',
-      'affectionateWithFamily', 'goodWithYoungChildren', 'goodWithOtherDogs'
+      'affectionateWithFamily', 'goodWithKids', 'goodWithOtherDogs', 
+      'barkingLevel', 'shedding'
     ];
 
     numericTraits.forEach(trait => {
