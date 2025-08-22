@@ -49,13 +49,15 @@ const breedSchema = new mongoose.Schema({
   },
 
   coatType: {
-    type: String,
-    enum: ['curly', 'smooth', 'double', 'wire', 'hairless']
+    type: [String],
+    enum: ['curly', 'smooth', 'double', 'wiry', 'hairless', 'wavy', 'silky', 'corded', 'rough'],
+    set: v => (Array.isArray(v) ? v : (v ? [v] : []))
   },
 
   coatLength: {
-    type: String,
-    enum: ['short', 'medium', 'long']
+    type: [String],
+    enum: ['short', 'medium', 'long'],
+    set: v => (Array.isArray(v) ? v : (v ? [v] : []))
   },
 
   livingEnvironment: {
@@ -68,6 +70,9 @@ const breedSchema = new mongoose.Schema({
     prevalence: { type: Number, min: 1, max: 5 }
   }],
 
+  imageUrl: { type: String },
+  //isWorkingBreed: { type: Boolean, default: false },
+  
   lastUpdated: {
     type: Date,
     default: Date.now

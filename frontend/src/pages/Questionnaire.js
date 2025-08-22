@@ -41,7 +41,8 @@ function Questionnaire() {
     async function fetchQuestions() {
       try {
         // For now, fetch a limited set while building flow
-        const res = await api.get('/api/questions?limit=10&sort=order');
+        const res = await api.get('/api/questions?limit=50&sort=order&_=' + Date.now());
+        //const res = await api.get('/api/questions?sort=order&_=' + Date.now()); - ovo koristit kasnije 
         setQuestions(res.data.data || []);
       } catch (err) {
         console.error('❌ Error fetching questions:', err);
@@ -177,6 +178,8 @@ function Questionnaire() {
       alert('Please answer at least one question before submitting.');
       return;
     }
+    console.log('Submitting answers', formattedAnswers);
+    const res = await api.post('/api/recommend', { answers: formattedAnswers });
 
     try {
       const res = await api.post('/api/recommend', { answers: formattedAnswers });

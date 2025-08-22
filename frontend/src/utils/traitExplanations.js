@@ -67,7 +67,7 @@ export const traitExplanations = {
   coatType: {
     label: 'Coat Type',
     explanation: 'Hair structure impacts grooming & sometimes allergens.',
-    values: { curly: 'Curly', smooth: 'Smooth', double: 'Double', wire: 'Wire', hairless: 'Hairless' }
+    values: { curly: 'Curly', smooth: 'Smooth', double: 'Double', wiry: 'Wiry', hairless: 'Hairless', rough: 'Rough', corded: 'Corded', wavy: 'Wavy', silky: 'Silky' }
   },
   coatLength: {
     label: 'Coat Length',

@@ -3,7 +3,7 @@ const { body } = require('express-validator');
 
 const ALLOWED_TRAITS = [
   'energyLevel','sizeCategory','goodWithKids','goodWithOtherDogs',
-  'trainability','barkingLevel','droolingLevel',
+  'trainability','barkingLevel','droolingLevel', 'affectionateWithFamily',
   'opennessToStrangers','protectiveNature','adaptabilityLevel',
   'playfulnessLevel','coatType','coatLength',
   'lifeExpectancy','weight','height','shedding',

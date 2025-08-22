@@ -5,7 +5,7 @@ const { matchBreeds } = require('../services/matchBreeds');
  * POST /api/recommend
  * Accepts user answers and returns best-matching breeds
  */
-const getRecommendations = async (req, res) => {
+const getRecommendations = async (req, res, next) => {
   try {
     const answers = req.body.answers;
     const includeBreakdown = req.query.debug === 'true';

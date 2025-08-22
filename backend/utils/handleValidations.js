@@ -1,10 +1,12 @@
+// /backend/utils/handleValidations.js
 const { validationResult } = require('express-validator');
 
-module.exports = function handleValidation(req, res, next) {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    const msg = errors.array().map(e => e.msg).join(', ');
-    return res.status(400).json({ success: false, error: msg });
+module.exports = (req, res, next) => {
+  const result = validationResult(req);
+  if (result.isEmpty()) return next();
+  if (process.env.NODE_ENV !== 'production') {
+    console.error('❌ Validation errors:', result.array(), 'BODY:', JSON.stringify(req.body));
+    return res.status(400).json({ success: false, error: 'Invalid request', details: result.array() });
   }
-  next();
+  return res.status(400).json({ success: false, error: 'Invalid request' });
 };
