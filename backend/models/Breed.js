@@ -25,10 +25,10 @@ const breedSchema = new mongoose.Schema({
     max: { type: Number, required: true }
   },
 
-  lifeExpectancy: {
+/*   lifeExpectancy: {
     min: { type: Number, required: true },
     max: { type: Number, required: true }
-  },
+  }, */
 
   affectionateWithFamily: { type: Number, min: 1, max: 5 },
   goodWithKids: { type: Number, min: 1, max: 5 },
@@ -65,14 +65,8 @@ const breedSchema = new mongoose.Schema({
     enum: ['urban', 'suburban', 'rural']
   },
 
-  commonHealthIssues: [{
-    name: { type: String },
-    prevalence: { type: Number, min: 1, max: 5 }
-  }],
 
-  imageUrl: { type: String },
-  //isWorkingBreed: { type: Boolean, default: false },
-  
+
   lastUpdated: {
     type: Date,
     default: Date.now

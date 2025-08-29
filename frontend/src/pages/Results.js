@@ -1,8 +1,9 @@
 // /frontend/src/pages/Results.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api';
-import { traitExplanations, traitLabel, valueLabel } from '../utils/traitExplanations';
+import { traitLabel, valueLabel } from '../utils/traitExplanations'; // Remove traitExplanations import
+import './Results.css';
 
 // --- sessionStorage helpers (persist explanations across refreshes) ---
 const SS_KEYS = {
@@ -21,35 +22,43 @@ const loadJSON = (k, fallback) => {
 };
 const saveJSON = (k, v) => { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch {} };
 
+// --- Breed image helpers ---
+export function slugifyBreed(name) { // Add export
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')   // non-alnum → dash
+    .replace(/(^-|-$)/g, '');      // trim dashes
+}
+
+// We serve static images from: /public/images/<slug>.jpg
+export function getBreedImageUrl(breedName) { // Add export
+  const slug = slugifyBreed(breedName);
+  return `/images/${slug}.jpg`;
+}
 
 function Results() {
   const location = useLocation();
   const navigate = useNavigate();
-  const results = location.state?.results || [];
-  const rawAnswers = location.state?.rawAnswers || [];
+  
+  // Use useMemo to prevent unnecessary re-renders
+  const results = useMemo(() => location.state?.results || [], [location.state]);
+  const rawAnswers = useMemo(() => location.state?.rawAnswers || [], [location.state]);
 
   // ─── State ───────────────────────────────────────────────────────
-  //const [whyMatchInfo, setWhyMatchInfo]       = useState({});
-  //const [whyNotInfo, setWhyNotInfo]           = useState('');
-  const [loadingWhyMatch, setLoadingWhyMatch] = useState({});
-  const [loadingWhyNot, setLoadingWhyNot]     = useState(false);
-  //const [careTipsInfo, setCareTipsInfo]       = useState({});
-  const [loadingCareTips, setLoadingCareTips] = useState({});
-  const [breedDetailsCache, setBreedDetailsCache]     = useState({});
-  //const [exclusionBannerText, setExclusionBannerText] = useState('');
-
   const [whyMatchInfo, setWhyMatchInfo]       = useState(() => loadJSON(SS_KEYS.whyMatch, {}));
   const [careTipsInfo, setCareTipsInfo]       = useState(() => loadJSON(SS_KEYS.careTips, {}));
   const [whyNotInfo, setWhyNotInfo]           = useState(() => loadJSON(SS_KEYS.whyNot, ''));
   const [inputValue, setInputValue]           = useState(() => loadJSON(SS_KEYS.input, ''));
   const [suggestion, setSuggestion]           = useState(() => loadJSON(SS_KEYS.suggestion, ''));
-  const [exclusionBannerText, setExclusionBannerText]       = useState(() => loadJSON(SS_KEYS.exclusion, ''));
+  const [exclusionBannerText, setExclusionBannerText] = useState(() => loadJSON(SS_KEYS.exclusion, ''));
+  const [loadingWhyMatch, setLoadingWhyMatch] = useState({});
+  const [loadingWhyNot, setLoadingWhyNot]     = useState(false);
+  const [loadingCareTips, setLoadingCareTips] = useState({});
+  const [breedDetailsCache, setBreedDetailsCache] = useState({});
 
-  // For autocomplete + “why not” flow
+  // For autocomplete + "why not" flow
   const [allBreedNames, setAllBreedNames]     = useState([]);
-  //const [inputValue, setInputValue]           = useState(''); // raw textbox value
   const [submittedBreed, setSubmittedBreed]   = useState(''); // last submitted/selected breed
-  //const [suggestion, setSuggestion]           = useState(''); // did-you-mean value
 
   // A stable signature of the result set, order-insensitive:
   const resultsSig = JSON.stringify(
@@ -59,7 +68,7 @@ function Results() {
   useEffect(() => {
     const prev = sessionStorage.getItem(SS_KEYS.resultsSig);
     if (prev && prev !== resultsSig) {
-      // Results changed → clear cached texts so we don’t show “poodle” notes for “collie”
+      // Results changed → clear cached texts so we don't show "poodle" notes for "collie"
       setWhyMatchInfo({});
       setCareTipsInfo({});
       setWhyNotInfo('');
@@ -69,14 +78,12 @@ function Results() {
     sessionStorage.setItem(SS_KEYS.resultsSig, resultsSig);
   }, [resultsSig]);
 
-
   useEffect(() => saveJSON(SS_KEYS.whyMatch,   whyMatchInfo),        [whyMatchInfo]);
   useEffect(() => saveJSON(SS_KEYS.careTips,   careTipsInfo),        [careTipsInfo]);
   useEffect(() => saveJSON(SS_KEYS.whyNot,     whyNotInfo),          [whyNotInfo]);
   useEffect(() => saveJSON(SS_KEYS.input,      inputValue),          [inputValue]);
   useEffect(() => saveJSON(SS_KEYS.suggestion, suggestion),          [suggestion]);
   useEffect(() => saveJSON(SS_KEYS.exclusion,  exclusionBannerText), [exclusionBannerText]);
-
 
   // ─── Redirect if missing context ────────────────────────────────
   useEffect(() => {
@@ -149,7 +156,6 @@ function Results() {
 
     return `${parts.join(' and ')} via exclude dealbreaker.`;
   };
-
 
   // ─── LLM calls for match, care tips, why-not ────────────────────
   const fetchWhyMatch = async (r, i) => {
@@ -231,13 +237,12 @@ function Results() {
   };
 
   // ─── Retry / Start over ─────────────────────────────────────────
-const handleTryAgain = () => {
-  localStorage.removeItem('dog4you_answers');
-  localStorage.removeItem('dog4you_currentIndex');
-  Object.values(SS_KEYS).forEach(k => sessionStorage.removeItem(k)); // ← add this line
-  navigate('/questionnaire');
-};
-
+  const handleTryAgain = () => {
+    localStorage.removeItem('dog4you_answers');
+    localStorage.removeItem('dog4you_currentIndex');
+    Object.values(SS_KEYS).forEach(k => sessionStorage.removeItem(k));
+    navigate('/questionnaire');
+  };
 
   // ─── Render ─────────────────────────────────────────────────────
   if (!results.length) {
@@ -250,99 +255,103 @@ const handleTryAgain = () => {
   }
 
   return (
-    <div style={{ padding: '1rem', maxWidth: 900, margin: '0 auto' }}>
-      <h1>Your Matches</h1>
-      <p style={{ fontSize: 12, marginBottom: 16 }}>
-        Matches are based on verified breed standards and your preferences.
+    <div className="results-container">
+      <h1>Your Perfect Matches</h1>
+      <p className="results-subtitle">
+        Based on your preferences and lifestyle, these breeds are the best fit for you.
+        Remember that individual dogs may vary based on breeding, training, and environment.
       </p>
 
       {/* ─── Match Cards ──────────────────────────────────────────── */}
       {results.map((r, i) => (
-        <div
-          key={i}
-          style={{
-            border: '1px solid #ccc',
-            padding: '1rem',
-            borderRadius: 8,
-            marginBottom: '1rem'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <div>
-              <h2 style={{ margin: 0 }}>
+        <div key={i} className="breed-card">
+          <div className="breed-card-header">
+            <div className="breed-title">
+              <h2>
                 #{i + 1} 🐶 {r.breed} — {r.matchPercentage}% match
               </h2>
               {r.reasons && r.reasons.length > 0 && (
-                <p style={{ color: '#b55', margin: '4px 0 0' }}>
+                <p className="imperfect-match">
                   Not perfect because: {r.reasons.join('; ')}
                 </p>
               )}
             </div>
             <button
+              className="explain-button"
               onClick={() => fetchWhyMatch(r, i)}
               disabled={loadingWhyMatch[i]}
             >
               {loadingWhyMatch[i] ? '⏳ Loading...' : 'Why this match?'}
             </button>
           </div>
-
-          {whyMatchInfo[i] && (
-            <div style={{ background: '#f0f8ff', padding: 10, borderRadius: 6, marginTop: 8 }}>
-              <strong>Explanation:</strong> {whyMatchInfo[i]}
+          
+          {/* Breed image and details */}
+          <div className="breed-content">
+            {/* Breed image */}
+            <div className="breed-image-container">
+              <img 
+                src={getBreedImageUrl(r.breed)} 
+                alt={r.breed}
+                className="breed-image"
+                onError={(e) => {
+                  e.target.src = '/images/placeholder-dog.jpg';
+                }}
+              />
+              <p className="breed-name">{r.breed}</p>
             </div>
-          )}
-
-          <button
-            onClick={() => fetchCareTips(r.breed, i)}
-            disabled={loadingCareTips[i]}
-            style={{ marginTop: 8 }}
-          >
-            {loadingCareTips[i] ? '⏳ Loading...' : 'Show Care Tips'}
-          </button>
-          {careTipsInfo[i] && (
-            <div style={{ background: '#e8f7e8', padding: 10, borderRadius: 6, marginTop: 8 }}>
-              <strong>Care Tips:</strong> {careTipsInfo[i]}
+            
+            {/* Breed details and buttons */}
+            <div className="breed-details">
+              <div className="explanation-section">
+                {whyMatchInfo[i] && (
+                  <div className="why-match-info">
+                    <strong>Explanation:</strong> {whyMatchInfo[i]}
+                  </div>
+                )}
+              </div>
+              
+              <div className="action-buttons">
+                <button
+                  className="care-tips-button"
+                  onClick={() => fetchCareTips(r.breed, i)}
+                  disabled={loadingCareTips[i]}
+                >
+                  {loadingCareTips[i] ? '⏳ Loading...' : 'Show Care Tips'}
+                </button>
+              </div>
+              
+              {careTipsInfo[i] && (
+                <div className="care-tips-info">
+                  <strong>Care Tips:</strong> {careTipsInfo[i]}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       ))}
 
-      {/* ─── “Why not” input, autocomplete, suggestion, explanation ─── */}
-      <div style={{ marginTop: 24, borderTop: '1px solid #ddd', paddingTop: 24 }}>
+      {/* ─── "Why not" input, autocomplete, suggestion, explanation ─── */}
+      <div className="why-not-section">
         <h3>Expected a different breed?</h3>
-        <p>Type the breed you thought you’d get and ask why not.</p>
+        <p>Type the breed you thought you'd get and ask why it wasn't recommended.</p>
 
-        <div style={{ position: 'relative', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {/* Input + Autocomplete */}
-          <div style={{ flex: 1, minWidth: 200, position: 'relative' }}>
+        <div className="breed-search">
+          <div className="search-input-container">
             <input
               aria-label="Enter a breed name"
               value={inputValue}
               onChange={(e) => {
                 const v = e.target.value;
                 setInputValue(v);
-                // Clear previous outputs while editing
                 setWhyNotInfo('');
                 setExclusionBannerText('');
                 setSuggestion('');
               }}
               placeholder="e.g., Border Collie"
-              style={{ width: '100%', padding: 6, boxSizing: 'border-box' }}
+              className="breed-search-input"
             />
             {allBreedNames.length > 0 && inputValue && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  background: '#fff',
-                  border: '1px solid #ccc',
-                  zIndex: 10,
-                  maxHeight: 160,
-                  overflowY: 'auto'
-                }}
-              >
+              <div className="autocomplete-dropdown">
                 {allBreedNames
                   .filter((n) => {
                     const lowN = n.toLowerCase();
@@ -353,6 +362,7 @@ const handleTryAgain = () => {
                   .map((b) => (
                     <div
                       key={b}
+                      className="autocomplete-item"
                       onClick={() => {
                         // choose suggestion → run why-not immediately
                         setInputValue(b);
@@ -392,11 +402,6 @@ const handleTryAgain = () => {
                           }
                         })();
                       }}
-                      style={{
-                        padding: '6px 10px',
-                        cursor: 'pointer',
-                        borderBottom: '1px solid #eee'
-                      }}
                     >
                       {b}
                     </div>
@@ -409,9 +414,7 @@ const handleTryAgain = () => {
           <button
             onClick={fetchWhyNot}
             disabled={loadingWhyNot || !inputValue.trim()}
-            aria-busy={loadingWhyNot}
-            aria-label={inputValue ? `Why not ${inputValue}` : 'Enter a breed to ask why not'}
-            style={{ padding: '8px 14px' }}
+            className="why-not-button"
           >
             {loadingWhyNot ? '⏳ Thinking...' : `Why not ${inputValue || '…'}?`}
           </button>
@@ -419,17 +422,7 @@ const handleTryAgain = () => {
 
         {/* Exclusion Banner (only shows after submit/selection) */}
         {exclusionBannerText && (
-          <div
-            style={{
-              background: exclusionBannerText.includes('not found') ? '#fff3cd' : '#ffe8e8',
-              padding: 10,
-              borderRadius: 6,
-              marginTop: 12,
-              border: exclusionBannerText.includes('not found')
-                ? '1px solid #ffe58f'
-                : '1px solid #dd9999'
-            }}
-          >
+          <div className="exclusion-banner">
             <strong>{exclusionBannerText}</strong>
           </div>
         )}
@@ -437,15 +430,7 @@ const handleTryAgain = () => {
         {/* Did you mean (after submit, for unknown breed) */}
         {suggestion &&
           suggestion.toLowerCase() !== (submittedBreed || inputValue).toLowerCase() && (
-            <div
-              style={{
-                marginTop: 8,
-                background: '#fff8e1',
-                padding: 8,
-                borderRadius: 6,
-                border: '1px solid #ffd966'
-              }}
-            >
+            <div className="suggestion-banner">
               Did you mean <strong>{suggestion}</strong>?
               <button
                 onClick={() => {
@@ -456,13 +441,13 @@ const handleTryAgain = () => {
                   setSuggestion('');
                   fetchWhyNot(); // valid → will call LLM
                 }}
-                style={{ marginLeft: 8 }}
+                className="suggestion-button"
               >
                 Yes
               </button>
               <button
                 onClick={() => setSuggestion('')}
-                style={{ marginLeft: 6 }}
+                className="suggestion-button"
               >
                 No
               </button>
@@ -471,25 +456,31 @@ const handleTryAgain = () => {
 
         {/* Why Not Explanation */}
         {whyNotInfo && (
-          <div
-            style={{
-              background: '#fff4e5',
-              padding: 10,
-              borderRadius: 6,
-              marginTop: 12
-            }}
-          >
+          <div className="why-not-explanation">
             <strong>Why Not Explanation:</strong> {whyNotInfo}
           </div>
         )}
       </div>
 
       {/* ─── Try Again ─────────────────────────────────────────────── */}
-      <div style={{ marginTop: 32, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <button onClick={handleTryAgain}>Edit Answers / Try Again</button>
+      <div className="try-again-section">
+        <button className="try-again-button" onClick={handleTryAgain}>
+          Edit Answers / Try Again
+        </button>
+      </div>
+
+      {/* Breed Standards Disclaimer */}
+      <div className="disclaimer">
+        <h4>Important Note About Breed Standards</h4>
+        <p>
+          The recommendations are based on general breed standards. Individual dogs may vary 
+          significantly based on their specific breeding, upbringing, training, and environment. 
+          Always meet a dog in person before making decisions, and consider adopting from rescues 
+          or working with ethical breeders who prioritize health and temperament.
+        </p>
       </div>
     </div>
   );
 }
 
-export default Results;
+export default Results; 

@@ -88,12 +88,16 @@ const server = app.listen(PORT, () => {
 });
 
 // Graceful shutdown
+// In server.js, update the shutdown function:
 function shutdown(signal) {
   console.log(`\n${signal} received. Closing server...`);
   server.close(() => {
-    mongoose.connection.close(false, () => {
+    mongoose.connection.close().then(() => {
       console.log('🔌 MongoDB connection closed.');
       process.exit(0);
+    }).catch(err => {
+      console.error('Error closing MongoDB connection:', err);
+      process.exit(1);
     });
   });
 }

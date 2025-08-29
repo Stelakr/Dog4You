@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { traitExplanations } from '../utils/traitExplanations';
 import { useNavigate } from 'react-router-dom';
+import './Questionnaire.css';
 
 function Questionnaire() {
   const [questions, setQuestions] = useState([]);
@@ -199,175 +200,159 @@ function Questionnaire() {
   const userAnswer = answers[current.trait] || {};
   const total = questions.length;
 
-  return (
-    <div style={{ maxWidth: 700, margin: '0 auto', padding: '1rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h2 style={{ margin: 0 }}>🐕 Questionnaire</h2>
-        <button onClick={resetAll} style={{ fontSize: 12, padding: '6px 10px' }}>
+   return (
+    <div className="questionnaire-container">
+      <div className="questionnaire-header">
+        <h2>🐕 Dog4You Questionnaire</h2>
+        <button className="reset-button" onClick={resetAll}>
           Start Over
         </button>
       </div>
 
       {justHydrated && (
-        <div
-          style={{
-            background: '#eef6ff',
-            padding: '10px',
-            borderRadius: 8,
-            marginBottom: 12,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}
-        >
+        <div className="saved-progress-banner">
           <div>
             Saved progress loaded.{' '}
-            <button
-              onClick={resetAll}
-              style={{ textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
-            >
+            <button className="text-button" onClick={resetAll}>
               Clear all
             </button>
           </div>
-          <div style={{ fontSize: 11, color: '#555' }}>Auto-saved</div>
+          <div className="auto-saved">Auto-saved</div>
         </div>
       )}
 
       {/* Progress */}
-      <div style={{ marginBottom: 8 }}>
-        <div style={{ fontSize: 14, marginBottom: 4 }}>
+      <div className="progress-container">
+        <div className="progress-text">
           Question {currentIndex + 1} of {total}
         </div>
-        <div
-          style={{
-            height: 8,
-            background: '#ddd',
-            borderRadius: 4,
-            overflow: 'hidden',
-            marginBottom: 8
-          }}
-        >
+        <div className="progress-bar">
           <div
-            style={{
-              width: `${((currentIndex + 1) / total) * 100}%`,
-              background: '#4f46e5',
-              height: '100%'
-            }}
+            className="progress-fill"
+            style={{ width: `${((currentIndex + 1) / total) * 100}%` }}
           />
         </div>
       </div>
 
-      {/* Card */}
-      <div style={{ padding: 16, border: '1px solid #ccc', borderRadius: 10, marginBottom: 16, background: '#fafafa' }}>
-        <p style={{ margin: '0 0 8px' }}>
-          <b>{current.text}</b>
-        </p>
+      {/* Question Card */}
+      <div className="question-card">
+        <p className="question-text">{current.text}</p>
 
-        {/* Options: always checkboxes (multi-select) */}
-        <div style={{ marginBottom: 8 }}>
+        {/* Options with improved styling */}
+        <div className="options-grid">
           {current.options.map((opt, idx) => {
             const isSelected = Array.isArray(userAnswer.value)
               ? userAnswer.value.includes(opt.value)
               : userAnswer.value === opt.value;
 
             return (
-              <label key={idx} style={{ display: 'block', marginBottom: 4 }}>
+              <div
+                key={idx}
+                className={`option-card ${isSelected ? 'selected' : ''}`}
+                onClick={() => toggleValue(current.trait, opt.value)}
+              >
                 <input
                   type="checkbox"
                   checked={isSelected}
-                  onChange={() => toggleValue(current.trait, opt.value)}
+                  onChange={() => {}}
                   style={{ marginRight: 6 }}
                 />
-                {opt.label}
-              </label>
+                <span className="option-label">{opt.label}</span>
+              </div>
             );
           })}
         </div>
 
-        {/* Toggles */}
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 8 }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: 4 }}>
-              <input
-                type="checkbox"
-                checked={userAnswer.dealbreaker || false}
-                onChange={(e) => toggleDealbreaker(current.trait, e.target.checked)}
-                //disabled={userAnswer.priority === 'low'}
-                style={{ marginRight: 6 }}
-              />
-              Dealbreaker
-            </label>
-            {userAnswer.dealbreaker && (
-              <div style={{ marginLeft: 16, marginTop: 4 }}>
-                <div style={{ fontSize: 12, marginBottom: 4 }}>Mode:</div>
-                <label style={{ marginRight: 10 }}>
+        {/* Dealbreaker Toggles */}
+        <div className="dealbreaker-section">
+          <label className="dealbreaker-toggle">
+            <input
+              type="checkbox"
+              checked={userAnswer.dealbreaker || false}
+              onChange={(e) => toggleDealbreaker(current.trait, e.target.checked)}
+            />
+            <span className="toggle-label">Make this a dealbreaker</span>
+          </label>
+          
+          {userAnswer.dealbreaker && (
+            <div className="dealbreaker-mode">
+              <div className="mode-title">Dealbreaker mode:</div>
+              <div className="mode-options">
+                <label className="mode-option">
                   <input
                     type="radio"
                     name={`${current.trait}-mode`}
                     checked={userAnswer.mode === 'accept'}
                     onChange={() => setDealbreakerMode(current.trait, 'accept')}
-                  />{' '}
-                  Accept only selected
+                  />
+                  <span>Accept only selected</span>
                 </label>
-                <label>
+                <label className="mode-option">
                   <input
                     type="radio"
                     name={`${current.trait}-mode`}
                     checked={userAnswer.mode === 'exclude'}
                     onChange={() => setDealbreakerMode(current.trait, 'exclude')}
-                  />{' '}
-                  Exclude selected
+                  />
+                  <span>Exclude selected</span>
                 </label>
               </div>
-            )}
-          </div>
-        </div>    
-
+            </div>
+          )}
+        </div>
 
         {/* Trait Info & LLM */}
         {traitExplanations[current.trait] && (
-          <div style={{ marginTop: 8, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <button
-              onClick={() => alert(traitExplanations[current.trait].explanation)}
-              title="Static explanation"
-            >
-              ℹ️ What does this mean?
-            </button>
+          <div className="trait-info-section">
+            <div className="info-buttons">
+              <button
+                className="info-button"
+                onClick={() => alert(traitExplanations[current.trait].explanation)}
+                title="Static explanation"
+              >
+                ℹ️ What does this mean?
+              </button>
 
-            <button onClick={() => fetchTraitExplanation(current.trait)} disabled={loadingTrait[current.trait]}>
-              {loadingTrait[current.trait] ? 'Thinking…' : '🤖 Ask More'}
-            </button>
+              <button 
+                className="info-button"
+                onClick={() => fetchTraitExplanation(current.trait)} 
+                disabled={loadingTrait[current.trait]}
+              >
+                {loadingTrait[current.trait] ? 'Thinking…' : '🤖 Ask More'}
+              </button>
+            </div>
 
             {llmTraitInfo[current.trait] && (
-              <div style={{ marginTop: 8, background: '#fff', padding: 10, borderRadius: 6, width: '100%' }}>
+              <div className="llm-response">
                 <strong>Assistant:</strong> {llmTraitInfo[current.trait]}
               </div>
             )}
             {llmError[current.trait] && (
-              <div style={{ marginTop: 8, color: 'crimson' }}>{llmError[current.trait]}</div>
+              <div className="llm-error">{llmError[current.trait]}</div>
             )}
           </div>
         )}
       </div>
 
-      {/* Nav */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-        <div>
-          <button onClick={goBack} disabled={currentIndex === 0} style={{ padding: '8px 14px' }}>
-            ← Back
+      {/* Navigation */}
+      <div className="navigation-buttons">
+        <button 
+          className="nav-button secondary" 
+          onClick={goBack} 
+          disabled={currentIndex === 0}
+        >
+          ← Back
+        </button>
+        
+        {currentIndex === total - 1 ? (
+          <button className="nav-button primary" onClick={handleSubmit}>
+            Submit & See Matches
           </button>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {currentIndex === total - 1 ? (
-            <button onClick={handleSubmit} style={{ padding: '8px 14px' }}>
-              Submit & See Matches
-            </button>
-          ) : (
-            <button onClick={goNext} style={{ padding: '8px 14px' }}>
-              Next →
-            </button>
-          )}
-        </div>
+        ) : (
+          <button className="nav-button primary" onClick={goNext}>
+            Next →
+          </button>
+        )}
       </div>
     </div>
   );
