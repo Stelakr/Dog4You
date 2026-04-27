@@ -53,6 +53,25 @@ function toMetric(doc) {
   if (out.coatType && !Array.isArray(out.coatType)) out.coatType = [out.coatType];
   if (out.coatLength && !Array.isArray(out.coatLength)) out.coatLength = [out.coatLength];
 
+  // Handle new fields - description and breedGroup
+  if (out.description && typeof out.description !== 'string') {
+    delete out.description; // Remove invalid descriptions
+  }
+  if (out.breedGroup && !['sporting', 'hound', 'working', 'terrier', 'toy', 'non-sporting', 'herding', 'mixed'].includes(out.breedGroup)) {
+    delete out.breedGroup; // Remove invalid breed groups
+  }
+
+  // Handle traits field - ADD THIS SECTION
+  if (out.traits && Array.isArray(out.traits)) {
+    out.traits = out.traits.slice(0, 4); // Limit to 4 traits
+  } else {
+    out.traits = []; // Ensure it's always an array
+  }
+
+  // Remove health-related fields if they exist
+  delete out.lifeExpectancy;
+  delete out.commonHealthIssues;
+
   // Clamp 0..5 where it applies (keeps your drooling 0 valid)
   const clamp = (n, lo, hi) => (typeof n === 'number' ? Math.max(lo, Math.min(hi, n)) : n);
   const scale01to05 = [
@@ -73,29 +92,62 @@ function toMetric(doc) {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('✅ Connected to DB');
 
+    // SAFETY CHECK: Don't run in production accidentally
+    if (process.env.NODE_ENV === 'production') {
+      console.error('❌ Cannot run seed script in production environment');
+      process.exit(1);
+    }
+
+    // DELETE ALL EXISTING BREEDS FIRST (clean slate)
+    console.log('🧹 Clearing all existing breeds from database...');
+    const deleteResult = await Breed.deleteMany({});
+    console.log(`✅ Deleted ${deleteResult.deletedCount} existing breeds`);
+
     const breeds = breedsRaw.map(toMetric);
 
     let inserted = 0;
-    let updated = 0;
+    let errors = 0;
+
+    console.log(`📝 Processing ${breeds.length} breeds...`);
 
     for (const b of breeds) {
-      const doc = {
-        ...b,
-        nameLower: b.name.toLowerCase(),
-        lastUpdated: new Date(),
-      };
+      try {
+        const doc = {
+          ...b,
+          nameLower: b.name.toLowerCase(),
+          lastUpdated: new Date(),
+          // Ensure new fields are included if present in source data
+          description: b.description || undefined,
+          breedGroup: b.breedGroup || 'mixed', // Changed from 'other' to 'mixed'
+          traits: b.traits || [] // Add traits field
+        };
 
-      const res = await Breed.updateOne(
-        { nameLower: doc.nameLower },
-        { $set: doc },
-        { upsert: true, runValidators: true }
-      );
-
-      if (res.upsertedCount && res.upsertedCount > 0) inserted += 1;
-      else if (res.modifiedCount && res.modifiedCount > 0) updated += 1;
+        // Use create instead of updateOne for better error reporting
+        await Breed.create(doc);
+        inserted += 1;
+        console.log(`✅ Added: ${b.name}`);
+        
+      } catch (error) {
+        errors += 1;
+        console.error(`❌ Error adding ${b.name}:`, error.message);
+      }
     }
 
-    console.log(`🌱 Upsert complete → inserted: ${inserted}, updated: ${updated}`);
+    console.log(`\n🌱 Seed complete!`);
+    console.log(`✅ Successfully inserted: ${inserted} breeds`);
+    console.log(`❌ Errors: ${errors} breeds`);
+    console.log(`📊 Total in database: ${await Breed.countDocuments()} breeds`);
+
+    // Verify the breeds were added correctly - UPDATED TO SHOW TRAITS
+    const breedNames = await Breed.find({}, 'name breedGroup description traits').sort('name');
+    console.log('\n📋 Breeds in database:');
+    breedNames.forEach((breed, index) => {
+      const groupInfo = breed.breedGroup && breed.breedGroup !== 'mixed' ? ` (${breed.breedGroup})` : '';
+      const descInfo = breed.description ? ' 📝' : '';
+      const traitsInfo = breed.traits && breed.traits.length > 0 ? ` [${breed.traits.join(', ')}]` : '';
+      console.log(`  ${index + 1}. ${breed.name}${groupInfo}${descInfo}${traitsInfo}`);
+    });
+
     process.exit(0);
   } catch (err) {
     console.error('❌ Error seeding breeds:', err);

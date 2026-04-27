@@ -65,6 +65,24 @@ const breedSchema = new mongoose.Schema({
     enum: ['urban', 'suburban', 'rural']
   },
 
+  description: {
+  type: String,
+  trim: true,
+  maxlength: 2000
+},
+
+breedGroup: {
+  type: String,
+  enum: ['sporting', 'hound', 'working', 'terrier', 'toy', 'non-sporting', 'herding', 'mixed'],
+  default: 'mixed'
+  },
+
+  
+traits: {
+  type: [String],
+  default: []
+  },
+
 
 
   lastUpdated: {
@@ -76,11 +94,12 @@ const breedSchema = new mongoose.Schema({
 // Virtual for size category
 breedSchema.virtual('sizeCategory').get(function () {
   const height = this.height?.max;
-  if (height === undefined) return null;
-  if (height < 30) return 'small';
-  if (height >= 30 && height <= 55) return 'medium';
+  if (height === undefined || height === null) return null;
+  if (height < 40) return 'small';
+  if (height >= 40 && height <= 60) return 'medium';
   return 'large';
 });
+
 
 // Keep nameLower in sync
 breedSchema.pre('save', function (next) {

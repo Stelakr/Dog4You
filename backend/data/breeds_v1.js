@@ -35,7 +35,7 @@ module.exports = [
     name: 'Affenpinscher',
     height: { min: 9, max: 12 }, 
     weight: { min: 7, max: 10 },
-    lifeExpectancy: { min: 12, max: 15 },
+    //lifeExpectancy: { min: 12, max: 15 },
 
     affectionateWithFamily: 3,
     goodWithKids: 3,
@@ -54,20 +54,12 @@ module.exports = [
     coatType: 'wiry',
     coatLength: ['short', 'medium'],
     livingEnvironment: ['urban', 'suburban', 'rural'],
-
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Brachycephalic Airway Syndrome', prevalence: 3 },
-      { name: 'Patellar luxation', prevalence: 3 },
-      { name: 'Hip Dysplasia', prevalence: 3 }
-    ]
   },
   {
     name: 'Afghan Hound',
     height: { min: 25, max: 27 },
     weight: { min: 50, max: 60 },
-    lifeExpectancy: { min: 12, max: 18 },
+    //lifeExpectancy: { min: 12, max: 18 },
 
     affectionateWithFamily: 3,
     goodWithKids: 3,
@@ -86,19 +78,14 @@ module.exports = [
     coatType: 'silky',
     coatLength: 'long',
     livingEnvironment: ['urban', 'suburban', 'rural'],
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Chylothorax', prevalence: 3 },
-      { name: 'Gastric Dilation and Volvulus', prevalence: 3 }
-    ]
+  
   },
 
   {
     name: 'Airedale Terrier',
     height: { min: 22, max: 24 },
     weight: { min: 50, max: 70 },
-    lifeExpectancy: { min: 11, max: 14 },
+    //lifeExpectancy: { min: 11, max: 14 },
 
     affectionateWithFamily: 3,
     goodWithKids: 3,
@@ -118,19 +105,13 @@ module.exports = [
     coatLength:'short',
     livingEnvironment: ['urban', 'suburban', 'rural'],
 
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Hip Dysplasia', prevalence: 4 },
-      { name: 'Bloat', prevalence: 3 }
-    ]
   },
 
   {
     name: 'Akita',
     height: { min: 24, max: 28 },
     weight: { min: 70, max: 130 },
-    lifeExpectancy: { min: 10, max: 14 },
+    //lifeExpectancy: { min: 10, max: 14 },
 
     affectionateWithFamily: 3,
     goodWithKids: 3,
@@ -150,21 +131,13 @@ module.exports = [
     coatLength: 'medium',
     livingEnvironment: ['urban', 'suburban', 'rural'],
 
-    imageUrl:'', 
-    //WORKING
-
-    commonHealthIssues: [
-      { name: 'Hip Dysplasia', prevalence: 3 },
-      { name: 'Hypothyroidism', prevalence: 4 }, 
-      { name: 'Sebaceous Adenitis', prevalence: 5 }
-    ]
   },
 
   {
     name: 'Alaskan Malamute',
     height: { min: 23, max: 25 },
     weight: { min: 75, max: 85 },
-    lifeExpectancy: { min: 10, max: 14 },
+    //lifeExpectancy: { min: 10, max: 14 },
 
     affectionateWithFamily: 3,
     goodWithKids: 3,
@@ -184,20 +157,12 @@ module.exports = [
     coatLength: 'medium',
     livingEnvironment: ['urban', 'suburban'],
 
-    
-     imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Elbow Dysplasia', prevalence: 4 },
-      { name: 'Hip Dysplasia', prevalence: 4 },
-      { name: 'Cataracts', prevalence: 3 }
-    ]
   },
   {
     name: 'American Bulldog',
     height: { min: 20, max: 25 },
     weight: { min: 60, max: 100 },
-    lifeExpectancy: { min: 10, max: 12 },
+    //lifeExpectancy: { min: 10, max: 12 },
 
     affectionateWithFamily: 2,
     goodWithKids: 2,
@@ -217,17 +182,12 @@ module.exports = [
     coatLength: 'short',
     livingEnvironment: ['suburban', 'rural'],
 
-    commonHealthIssues: [
-      { name: 'Hip Dysplasia', prevalence: 4 },
-      { name: 'Elbow Dysplasia', prevalence: 3 },
-      { name: 'Allergies ', prevalence: 4 }
-    ]
   },
   {
     name: 'American Eskimo Dog',
     height: { min: 9, max: 19 },
     weight: { min: 6, max: 35 },
-    lifeExpectancy: { min: 13, max: 15 },
+    //lifeExpectancy: { min: 13, max: 15 },
 
     affectionateWithFamily: 5,
     goodWithKids: 5,
@@ -247,18 +207,12 @@ module.exports = [
     coatLength: 'medium',
     livingEnvironment: ['urban', 'suburban'],
 
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Progressive Retinal Atrophy', prevalence: 3 },
-      { name: 'Dental Disease', prevalence: 4 }
-    ]
   },
   {
     name: 'American Foxhound',
     height: { min: 21, max: 25 },
     weight: { min: 60, max: 70 },
-    lifeExpectancy: { min: 11, max: 13 },
+    //lifeExpectancy: { min: 11, max: 13 },
 
     affectionateWithFamily: 3,
     goodWithKids: 5,
@@ -277,17 +231,12 @@ module.exports = [
     coatType: 'smooth',
     coatLength: 'short',
     livingEnvironment: ['urban', 'suburban', 'rural'],
-
-    commonHealthIssues: [
-      { name: 'Hip Dysplasia', prevalence: 4 },
-      { name: 'Thrombocytopathy', prevalence: 3 }
-    ]
   },
   {
     name: 'American Hairless Terrier',
     height: { min: 12, max: 16 },
     weight: { min: 12, max: 28 },
-    lifeExpectancy: { min: 14, max: 16 },
+    //lifeExpectancy: { min: 14, max: 16 },
 
     affectionateWithFamily: 5,
     goodWithKids: 5,
@@ -307,16 +256,13 @@ module.exports = [
     coatLength: 'short',
     livingEnvironment: ['urban', 'suburban', 'rural'],
 
-    commonHealthIssues: [
-      { name: 'Patella Luxation', prevalence: 3 },
-      { name: 'Heart Disease', prevalence: 3 }
-    ]
+
   },
   {
     name: 'American Staffordshire Terrier',
     height: { min: 17, max: 19 },
     weight: { min: 40, max: 70 },
-    lifeExpectancy: { min: 12, max: 16 },
+    //lifeExpectancy: { min: 12, max: 16 },
 
     affectionateWithFamily: 5,
     goodWithKids: 3,
@@ -335,20 +281,12 @@ module.exports = [
     coatType: 'smooth',
     coatLength: 'short',
     livingEnvironment: ['urban', 'suburban', 'rural'],
-
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Hip Dysplasia', prevalence: 4 },
-      { name: 'Elbow Dysplasia', prevalence: 3 },
-      { name: 'Progressive Retinal Atrophy (PRA)', prevalence: 2 }
-    ]
   },
   {
     name: 'American Water Spaniel',
     height: { min: 15, max: 18 }, 
     weight: { min: 25 , max: 45 },
-    lifeExpectancy: { min: 10, max: 14 },
+    //lifeExpectancy: { min: 10, max: 14 },
 
     affectionateWithFamily: 3,
     goodWithKids: 3,
@@ -368,18 +306,12 @@ module.exports = [
     coatLength: ['medium'],
     livingEnvironment: ['rural', 'suburban'],
 
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Hip Dysplasia', prevalence: 2 },
-      { name: 'Degenerative Myelopathy', prevalence: 2 }
-    ]
   },
   {
     name: 'Anatolian Shepherd Dog',
     height: { min: 27, max: 29 }, 
     weight: { min: 80, max: 150 },
-    lifeExpectancy: { min: 11, max: 13 },
+    //lifeExpectancy: { min: 11, max: 13 },
 
     affectionateWithFamily: 1,
     goodWithKids: 3,
@@ -398,20 +330,12 @@ module.exports = [
     coatType: 'smooth',
     coatLength: ['short'],
     livingEnvironment: ['rural', 'suburban'],
-
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Entropion', prevalence: 4 },
-      { name: 'Sensitivity to Anesthesia', prevalence: 1 },
-      { name: 'Gastric Dilatation and Volvulus', prevalence: 4 }
-    ]
   },
   {
     name: 'Appenzeller Sennenhund',
     height: { min: 20, max: 22 }, 
     weight: { min: 48, max: 70 },
-    lifeExpectancy: { min: 13, max: 15 },
+    //lifeExpectancy: { min: 13, max: 15 },
 
     affectionateWithFamily: 5,
     goodWithKids: 3,
@@ -430,19 +354,12 @@ module.exports = [
     coatType: ['smooth', 'double'],
     coatLength: ['short',],
     livingEnvironment: ['rural', 'suburban'],
-
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: '', prevalence: 3 },
-      { name: '', prevalence: 3 }
-    ]
   },
   {
     name: 'Australian Cattle Dog',
     height: { min: 17, max: 20 }, 
     weight: { min: 35, max: 50 },
-    lifeExpectancy: { min: 12, max: 16 },
+    //lifeExpectancy: { min: 12, max: 16 },
 
     affectionateWithFamily: 3,
     goodWithKids: 3,
@@ -462,18 +379,12 @@ module.exports = [
     coatLength: ['short'],
     livingEnvironment: ['rural', 'suburban'],
 
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Eye Issues', prevalence: 3 },
-      { name: 'Deafness', prevalence: 3 }
-    ]
   },
   {
     name: 'Australian Kelpie',
     height: { min: 17, max: 20 }, 
     weight: { min: 35, max: 50 },
-    lifeExpectancy: { min: 10, max: 13 },
+    //lifeExpectancy: { min: 10, max: 13 },
 
     affectionateWithFamily: 3,
     goodWithKids: 3,
@@ -493,18 +404,13 @@ module.exports = [
     coatLength: ['short'],
     livingEnvironment: ['rural', 'suburban'],
 
-    imageUrl:'',
 
-    commonHealthIssues: [
-      { name: 'Hip Dysplasia', prevalence: 4 },
-      { name: 'Luxating Patella', prevalence: 3 }
-    ]
   },
   {
     name: 'Australian Shepherd',
     height: { min: 18, max: 23 }, 
     weight: { min: 40, max: 65 },
-    lifeExpectancy: { min: 12, max: 25 },
+    //lifeExpectancy: { min: 12, max: 25 },
 
     affectionateWithFamily: 3,
     goodWithKids: 5,
@@ -524,18 +430,12 @@ module.exports = [
     coatLength: ['medium'],
     livingEnvironment: ['rural', 'suburban',],
 
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Hip and Elbow Dysplasia', prevalence: 4 },
-      { name: 'Progressive Retinal Atrophy', prevalence: 2 }
-    ]
   },
   {
     name: 'Australian Terrier',
     height: { min: 10, max: 11 }, 
     weight: { min: 15, max: 20 },
-    lifeExpectancy: { min: 11, max: 15 },
+    //lifeExpectancy: { min: 11, max: 15 },
 
     affectionateWithFamily: 4,
     goodWithKids: 5,
@@ -555,18 +455,12 @@ module.exports = [
     coatLength: ['medium'],
     livingEnvironment: ['urban', 'suburban'],
 
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Luxating Patella', prevalence: 3 },
-      { name: 'Legg-Calve-Perthes Disease', prevalence: 2 }
-    ]
   },
   {
     name: 'Azawakh',
     height: { min: 23.5, max: 29 }, 
     weight: { min: 33, max: 55 },
-    lifeExpectancy: { min: 12, max: 15 },
+    //lifeExpectancy: { min: 12, max: 15 },
 
     affectionateWithFamily: 3,
     goodWithKids: 3,
@@ -586,18 +480,12 @@ module.exports = [
     coatLength: ['short'],
     livingEnvironment: ['urban', 'suburban'],
 
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Hypothyroidism', prevalence: 4 },
-      { name: 'Masticatory Muscle Myositis', prevalence: 3 }
-    ]
   },
   {
     name: 'Barbado da Terceira',
     height: { min: 19, max: 22 }, 
     weight: { min: 46, max: 60 },
-    lifeExpectancy: { min: 12, max: 14 },
+    //lifeExpectancy: { min: 12, max: 14 },
 
     affectionateWithFamily: 5,
     goodWithKids: 3,
@@ -617,18 +505,12 @@ module.exports = [
     coatLength: ['medium'],
     livingEnvironment: ['urban', 'suburban', 'rural'],
 
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: '', prevalence:  3 },
-      { name: '', prevalence:  3 }
-    ]
   },
   {
     name: 'Barbet',
     height: { min: 19, max: 24.5 }, 
     weight: { min: 35, max: 65 },
-    lifeExpectancy: { min: 12, max: 14 },
+    //lifeExpectancy: { min: 12, max: 14 },
 
     affectionateWithFamily: 4,
     goodWithKids: 3,
@@ -648,21 +530,12 @@ module.exports = [
     coatLength: ['medium', 'long'],
     livingEnvironment: ['rural', 'urban', 'suburban'],
 
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Hip Dysplasia', prevalence: 3 },
-      { name: 'Progressive Retinal Atrophy (PRA)', prevalence: 2 },
-      { name: 'Ear Infections', prevalence: 4 }
-
-
-    ]
   },
   {
     name: 'Basenji',
     height: { min: 16, max: 17 }, 
     weight: { min: 22, max: 24 },
-    lifeExpectancy: { min: 13, max: 14 },
+    //lifeExpectancy: { min: 13, max: 14 },
 
     affectionateWithFamily: 3,
     goodWithKids: 3,
@@ -682,18 +555,12 @@ module.exports = [
     coatLength: ['short'],
     livingEnvironment: ['urban', 'suburban', 'rural'],
 
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Hypothyroidism', prevalence: 4 },
-      { name: 'Fanconi Syndrome', prevalence: 3 }
-    ]
   },
   {
     name: 'Basset Hound',
     height: { min: 10, max: 15 }, 
     weight: { min: 40, max: 65 },
-    lifeExpectancy: { min: 12, max: 13 },
+    //lifeExpectancy: { min: 12, max: 13 },
 
     affectionateWithFamily: 3,
     goodWithKids: 5,
@@ -713,18 +580,12 @@ module.exports = [
     coatLength: ['short'],
     livingEnvironment: ['urban', 'suburban', 'rural'],
 
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Skin and Ear Problems', prevalence: 4 },
-      { name: 'Hip and Elbow Dysplasia', prevalence: 3 }
-    ]
   },
   {
     name: 'Beagle',
     height: { min: 10, max: 15 }, 
     weight: { min: 15, max: 30 },
-    lifeExpectancy: { min: 10, max: 15 },
+    //lifeExpectancy: { min: 10, max: 15 },
 
     affectionateWithFamily: 3,
     goodWithKids: 5,
@@ -744,18 +605,12 @@ module.exports = [
     coatLength: ['short'],
     livingEnvironment: ['rural', 'suburban', 'urban'],
 
-    imageUrl:'',
-
-    commonHealthIssues: [
-      { name: 'Ear Infections', prevalence: 4 },
-      { name: 'Obesity', prevalence: 3 }
-    ]
   },
   {
     name: 'Bearded Collie',
     height: { min: 20, max: 22 }, 
     weight: { min: 45, max: 55 },
-    lifeExpectancy: { min: 12, max: 14 },
+    //lifeExpectancy: { min: 12, max: 14 },
 
     affectionateWithFamily: 4,
     goodWithKids: 5,
@@ -775,21 +630,476 @@ module.exports = [
     coatLength: ['long'],
     livingEnvironment: ['urban', 'rural', 'suburban'],
 
-    imageUrl:'',
+  },
+  {
+    name: 'Beauceron',
+    height: { min: 24, max: 27.5 }, 
+    weight: { min: 70, max: 110 },
+    lifeExpectancy: { min: 10, max: 12 },
 
-    commonHealthIssues: [
-      { name: 'Hip Dysplasia', prevalence: 2 },
-      { name: 'Addison’s Disease', prevalence: 3 }
-    ]
+    affectionateWithFamily: 3,
+    goodWithKids: 3,
+    goodWithOtherDogs: 3,
+    droolingLevel: 1,
+    opennessToStrangers: 2,
+    barkingLevel: 3,
+    shedding: 4,
+    protectiveNature: 4,
+    playfulnessLevel: 3,
+    adaptabilityLevel: 3,
+    energyLevel: 5,
+    trainability: 3,
+
+    groomingFrequency: { value: 3, unit: 'week' },
+    coatType: ['smooth', 'double'],
+    coatLength: ['short'],
+    livingEnvironment: ['rural', 'suburban'],
   },
 
+  {
+    name: 'Bedlington Terrier',
+    height: { min: 15, max: 17.5 }, 
+    weight: { min: 17, max: 23 },
+    lifeExpectancy: { min: 11, max: 16 },
+
+    affectionateWithFamily: 3,
+    goodWithKids: 3,
+    goodWithOtherDogs: 3,
+    droolingLevel: 1,
+    opennessToStrangers: 3,
+    barkingLevel: 3,
+    shedding: 1,
+    protectiveNature: 4,
+    playfulnessLevel: 3,
+    adaptabilityLevel: 3,
+    energyLevel: 4,
+    trainability: 3,
+
+    groomingFrequency: { value: 2, unit: 'week' },
+    coatType: ['curly'],
+    coatLength: ['medium'],
+    livingEnvironment: ['rural', 'suburban', 'urban'],
+  },  
+
+  //Nakon description
+   {
+    name: 'Belgian Laekenois',
+    height: { min: 22, max: 26 }, 
+    weight: { min: 55, max: 65 },
+    lifeExpectancy: { min: 10, max: 12 },
+
+    affectionateWithFamily: 3,
+    goodWithKids: 3,
+    goodWithOtherDogs: 3,
+    droolingLevel: 1,
+    opennessToStrangers: 3,
+    barkingLevel: 3,
+    shedding: 3,
+    protectiveNature: 4,
+    playfulnessLevel: 3,
+    adaptabilityLevel: 3,
+    energyLevel: 4,
+    trainability: 5,
+
+    groomingFrequency: { value: 3, unit: 'month' },
+    coatType: ['rough', 'wiry'],
+    coatLength: ['medium'],
+    livingEnvironment: ['rural', 'suburban', 'urban'],
+    description: "The Belgian Laekenois is an intelligent, wiry-coated herding dog known for its alert, loyal nature and strong work ethic. The rarest of Belgium’s four shepherds, it combines an affectionate bond with family and a serious guardian instinct. Energetic and always attentive, the Laekenois thrives when given purpose — whether training, agility, or daily active walks. Beneath its tousled coat lies a sensitive, devoted companion that needs consistent leadership, mental challenges, and plenty of exercise to stay balanced. This breed is best for owners who value structure, outdoor activity, and a partnership built on mutual respect.",
+    breedGroup: 'herding',
+    traits: ['alert', 'intelligent', 'devoted']
+  },  
+  {
+    name: 'Belgian Malinois',
+    height: { min: 22, max: 26 }, 
+    weight: { min: 40, max: 80 },
+    lifeExpectancy: { min: 14, max: 16 },
+
+    affectionateWithFamily: 3,
+    goodWithKids: 3,
+    goodWithOtherDogs: 3,
+    droolingLevel: 1,
+    opennessToStrangers: 3,
+    barkingLevel: 3,
+    shedding: 3,
+    protectiveNature: 4,
+    playfulnessLevel: 3,
+    adaptabilityLevel: 3,
+    energyLevel: 4,
+    trainability: 5,
+
+    groomingFrequency: { value: 2, unit: 'month' },
+    coatType: ['smooth'],
+    coatLength: ['short'],
+    livingEnvironment: ['rural', 'suburban'],
+    description: "The Belgian Malinois is a confident, highly intelligent herding dog built for endurance, precision, and purpose. Bred in Belgium as a livestock guardian and later refined into one of the world’s most capable working dogs, the Malinois thrives when it has a job to do—police work, agility, search and rescue, or daily structured training. They are affectionate but not soft-tempered, forming intense bonds with their handlers. This breed demands meaningful mental and physical work every single day. Without it, frustration and destructive behavior appear quickly. The Malinois is best for experienced owners who value discipline, athletic activity, and partnership grounded in respect and consistency.",
+    breedGroup: 'herding',
+    traits: ['driven', 'intelligent', 'loyal']
+  },  
+  {
+    name: 'Belgian Sheepdog',
+    height: { min: 22, max: 26 }, 
+    weight: { min: 45, max: 75 },
+    lifeExpectancy: { min: 12, max: 14 },
+
+    affectionateWithFamily: 3,
+    goodWithKids: 3,
+    goodWithOtherDogs: 3,
+    droolingLevel: 1,
+    opennessToStrangers: 3,
+    barkingLevel: 3,
+    shedding: 3,
+    protectiveNature: 4,
+    playfulnessLevel: 3,
+    adaptabilityLevel: 3,
+    energyLevel: 4,
+    trainability: 5,
+
+    groomingFrequency: { value: 1, unit: 'week' },
+    coatType: ['double'],
+    coatLength: ['medium'],
+    livingEnvironment: ['rural', 'suburban'],
+    description: "The Belgian Sheepdog, or Groenendael, is an elegant, intelligent herding breed known for its striking black coat and loyal, steady nature. Originally bred in Belgium for herding and guarding, it combines grace with purpose and thrives on activity, structure, and human connection. This breed is quick to learn, alert, and deeply devoted but needs regular mental and physical work to remain calm. Without exercise or leadership, boredom turns to frustration. Ideal for experienced owners who value training and outdoor life, the Belgian Sheepdog rewards commitment with focus, sensitivity, and enduring loyalty.",
+    breedGroup: 'herding',
+    traits: ['alert', 'intelligent', 'devoted']
+  },	
+  {
+    name: 'Belgian Tervuren',
+    height: { min: 22, max: 26 }, 
+    weight: { min: 45, max: 75 },
+    lifeExpectancy: { min: 12, max: 14 },
+
+    affectionateWithFamily: 3,
+    goodWithKids: 3,
+    goodWithOtherDogs: 3,
+    droolingLevel: 1,
+    opennessToStrangers: 3,
+    barkingLevel: 3,
+    shedding: 3,
+    protectiveNature: 4,
+    playfulnessLevel: 3,
+    adaptabilityLevel: 3,
+    energyLevel: 4,
+    trainability: 5,
+
+    groomingFrequency: { value: 1, unit: 'week' },
+    coatType: ['double'],
+    coatLength: ['medium'],
+    livingEnvironment: ['rural', 'suburban'],
+    description: "The Belgian Tervuren is a striking, intelligent herding breed known for its flowing fawn-to-mahogany coat and sharp awareness. Bred in Belgium as a versatile worker and loyal family guardian, the Tervuren combines elegance with intensity. Energetic and purposeful, they thrive when given tasks and close companionship. This is a breed for active, experienced owners who value training, discipline, and mutual respect. When under-stimulated, their quick mind and drive can lead to frustration or mischief. With structure, early socialization, and plenty of activity, the Belgian Tervuren is a devoted, graceful, and tireless partner.",
+    breedGroup: 'herding',
+    traits: ['alert', 'intelligent', 'driven']
+  },
+ 	{
+    name: 'Bergamasco Sheepdog',
+    height: { min: 22, max: 23.5 }, 
+    weight: { min: 57, max: 84 },
+    lifeExpectancy: { min: 13, max: 15 },
+
+    affectionateWithFamily: 3,
+    goodWithKids: 3,
+    goodWithOtherDogs: 3,
+    droolingLevel: 2,
+    opennessToStrangers: 3,
+    barkingLevel: 1,
+    shedding: 1,
+    protectiveNature: 4,
+    playfulnessLevel: 3,
+    adaptabilityLevel: 3,
+    energyLevel: 3,
+    trainability: 3,
+
+    groomingFrequency: { value: 2, unit: 'month' },
+    coatType: ['corded'],
+    coatLength: ['long'],
+    livingEnvironment: ['rural', 'suburban'],
+    description: "The Bergamasco Sheepdog is an ancient herding breed from the Italian Alps, known for its intelligence, calm confidence, and distinctive felted coat. Beneath its rustic appearance lies a thoughtful, observant worker bred to protect and move livestock in harsh mountain climates. The Bergamasco forms deep bonds with its family and shows quiet devotion rather than constant affection. Independent yet gentle, this breed thinks before it acts and thrives in environments where it can use its mind. With moderate exercise, early socialization, and steady routines, the Bergamasco becomes a loyal, self-possessed guardian and a uniquely beautiful companion",
+    breedGroup: 'herding',
+    traits: ['intelligent', 'calm', 'devoted']
+  },
+  {
+    name: 'Berger Picard',
+    height: { min: 21.5, max: 25.5 }, 
+    weight: { min: 50, max: 70 },
+    lifeExpectancy: { min: 12, max: 13 },
+
+    affectionateWithFamily: 3,
+    goodWithKids: 3,
+    goodWithOtherDogs: 3,
+    droolingLevel: 1,
+    opennessToStrangers: 3,
+    barkingLevel: 2,
+    shedding: 3,
+    protectiveNature: 4,
+    playfulnessLevel: 3,
+    adaptabilityLevel: 3,
+    energyLevel: 4,
+    trainability: 4,
+
+    groomingFrequency: { value: 1, unit: 'month' },
+    coatType: ['wiry'],
+    coatLength: ['medium'],
+    livingEnvironment: ['rural', 'suburban'],
+    description: "The Berger Picard is an intelligent, athletic French herding dog known for its rustic, wiry coat and expressive face. Bred in the Picardy region to herd sheep and cattle, this breed combines energy with emotional sensitivity and quiet confidence. Picards form deep bonds with their families, often attaching closely to one person, and balance independence with loyalty. They thrive when given structure, meaningful activity, and daily companionship. Despite their rough look, they are clean, low-odor dogs with minimal grooming needs. With steady leadership, proper socialization, and physical engagement, the Berger Picard becomes a perceptive, affectionate, and dependable partner both at work and at home.",
+    breedGroup: 'herding',
+    traits: ['alert', 'loyal', 'energetic']
+  },
+  {
+    name: 'Bernese Mountain Dog',
+    height: { min: 23, max: 27.5 }, 
+    weight: { min: 70, max: 115 },
+    lifeExpectancy: { min: 7, max: 10 },
+
+    affectionateWithFamily: 5,
+    goodWithKids: 5,
+    goodWithOtherDogs: 5,
+    droolingLevel: 3,
+    opennessToStrangers: 4,
+    barkingLevel: 3,
+    shedding: 5,
+    protectiveNature: 3,
+    playfulnessLevel: 4,
+    adaptabilityLevel: 4,
+    energyLevel: 4,
+    trainability: 4,
+
+    groomingFrequency: { value: 1, unit: 'week' },
+    coatType: ['double'],
+    coatLength: ['medium'],
+    livingEnvironment: ['rural', 'suburban'],
+    description: "The Bernese Mountain Dog is a large, tri-colored Swiss farm dog bred for draft and droving work. Calm, intelligent, and eager to please, Berners pair gentle family affection with sturdy, outdoor-capable stamina. They bond closely with their people, are typically patient with children and other dogs, and thrive on purposeful routines—neighborhood walks, nose work, or light carting. Their double coat is beautiful and heavy-shedding, and heat sensitivity means they do best with cool rest spots and moderate activity in warmer weather. With steady training, kind leadership, and consistent grooming care, the Bernese Mountain Dog becomes a devoted, even-tempered companion who enjoys both play and quiet time at home.",
+    breedGroup: 'working',
+    traits: ['gentle', 'loyal', 'steady']
+  },
+  {
+    name: 'Bichon Frise',
+    height: { min: 9.5, max: 11.5 }, 
+    weight: { min: 12, max: 18 },
+    lifeExpectancy: { min: 14, max: 15 },
+
+    affectionateWithFamily: 5,
+    goodWithKids: 5,
+    goodWithOtherDogs: 5,
+    droolingLevel: 1,
+    opennessToStrangers: 5,
+    barkingLevel: 3,
+    shedding: 1,
+    protectiveNature: 2,
+    playfulnessLevel: 4,
+    adaptabilityLevel: 4,
+    energyLevel: 4,
+    trainability: 4,
+
+    groomingFrequency: { value: 1, unit: 'daily' },
+    coatType: ['double','curly'],
+    coatLength: ['long'],
+    livingEnvironment: ['urban', 'suburban'],
+    description: "The Bichon Frise is a cheerful, affectionate companion dog known for its plush white coat and lively spirit. Originally bred as a sailing and lap companion, the Bichon combines intelligence, playfulness, and remarkable social charm. Beneath its fluffy exterior is a sturdy, confident little dog that thrives on human attention and consistent structure. Curious and eager to please, Bichons love learning tricks, playing indoors, and meeting new people or pets. Their non-shedding double coat makes them suitable for some allergy-sensitive homes but demands daily grooming and regular professional care. With gentle leadership, patient training, and companionship, the Bichon Frise becomes a joyful, loyal partner for families and city dwellers alike.",
+    breedGroup: 'non-sporting',
+    traits: ['cheerful', 'affectionate', 'sociable']
+  },
+  {
+    name: 'Biewer Terrier',
+    height: { min: 7, max: 11 }, 
+    weight: { min: 4, max: 8 },
+    lifeExpectancy: { min: 14, max: 16 },
+
+    affectionateWithFamily: 5,
+    goodWithKids: 3,
+    goodWithOtherDogs: 5,
+    droolingLevel: 1,
+    opennessToStrangers: 3,
+    barkingLevel: 3,
+    shedding: 1,
+    protectiveNature: 2,
+    playfulnessLevel: 4,
+    adaptabilityLevel: 3,
+    energyLevel: 3,
+    trainability: 3,
+
+    groomingFrequency: { value: 2, unit: 'week' },
+    coatType: ['silky'],
+    coatLength: ['long'],
+    livingEnvironment: ['urban', 'suburban'],
+    description: "The Biewer Terrier is a joyful, elegant toy breed known for its distinctive tricolor silky coat and lively, affectionate nature. Originating in Germany in the 1980s from Yorkshire Terrier lines, the Biewer combines the intelligence and confidence of a terrier with a playful, whimsical personality. Cheerful, loyal, and devoted, these small companions love to stay close to their people but retain an independent streak. Though adaptable to apartment life, they need daily play and gentle structure to stay balanced. With steady socialization and consistent, kind training, the Biewer Terrier becomes a charming, bright companion who thrives on affection, activity, and family closeness.",
+    breedGroup: 'toy',
+    traits: ['playful', 'affectionate', 'charming']
+  },
+ 	{
+    name: 'Black and Tan Coonhound',
+    height: { min: 23, max: 27 }, 
+    weight: { min: 65, max: 110 },
+    lifeExpectancy: { min: 10, max: 12 },
+
+    affectionateWithFamily: 4,
+    goodWithKids: 5,
+    goodWithOtherDogs: 5,
+    droolingLevel: 3,
+    opennessToStrangers: 3,
+    barkingLevel: 4,
+    shedding: 3,
+    protectiveNature: 2,
+    playfulnessLevel: 3,
+    adaptabilityLevel: 4,
+    energyLevel: 3,
+    trainability: 3,
+
+    groomingFrequency: { value: 3, unit: 'month' },
+    coatType: ['smooth'],
+    coatLength: ['short'],
+    livingEnvironment: ['rural', 'suburban'],
+    description: "The Black and Tan Coonhound is a powerful, determined scent hound built for endurance and purpose. Originating in the United States from Bloodhound and Virginia Foxhound ancestry, this breed excels at tracking and treeing game over difficult terrain. Despite its rugged hunting roots, the Coonhound is gentle, loyal, and even-tempered at home. They are affectionate with family, patient with children, and thrive when included in daily life. Their deep baying voice reflects their heritage, and their independence requires steady, patient training. With space to explore, consistent exercise, and kind leadership, the Black and Tan Coonhound becomes a devoted and soulful companion that balances adventure with calm companionship.",
+    breedGroup: 'hound',
+    traits: ['loyal', 'enduring', 'gentle']
+  },
+  {
+    name: 'Black Russian Terrier',
+    height: { min: 26, max: 30 }, 
+    weight: { min: 80, max: 130 },
+    lifeExpectancy: { min: 10, max: 12 },
+
+    affectionateWithFamily: 3,
+    goodWithKids: 3,
+    goodWithOtherDogs: 3,
+    droolingLevel: 3,
+    opennessToStrangers: 2,
+    barkingLevel: 3,
+    shedding: 3,
+    protectiveNature: 5,
+    playfulnessLevel: 3,
+    adaptabilityLevel: 4,
+    energyLevel: 4,
+    trainability: 4,
+
+    groomingFrequency: { value: 4, unit: 'week' },
+    coatType: ['double', 'curly'],
+    coatLength: ['medium', 'long'],
+    livingEnvironment: ['rural', 'suburban'],
+    description: "The Black Russian Terrier is a commanding, intelligent working dog bred for strength, endurance, and loyalty. Originally developed in post-war Russia as a military and guard dog, this breed combines the power of large working breeds with a calm, confident temperament. Beneath their imposing frame lies a composed, affectionate companion deeply bonded to family. They are reserved with strangers but never timid, protective without unnecessary aggression, and thrive under structured leadership. Their dense double coat requires steady grooming, and their active mind needs consistent challenge. With training, discipline, and inclusion, the Black Russian Terrier becomes a steadfast guardian and gentle, loyal partner.",
+    breedGroup: 'working',
+    traits: ['protective', 'intelligent', 'confident']
+  },
+ 	{
+    name: 'Bloodhound',
+    height: { min: 23, max: 27 }, 
+    weight: { min: 80, max: 110 },
+    lifeExpectancy: { min: 10, max: 12 },
+
+    affectionateWithFamily: 4,
+    goodWithKids: 3,
+    goodWithOtherDogs: 3,
+    droolingLevel: 5,
+    opennessToStrangers: 3,
+    barkingLevel: 5,
+    shedding: 3,
+    protectiveNature: 2,
+    playfulnessLevel: 3,
+    adaptabilityLevel: 4,
+    energyLevel: 3,
+    trainability: 4,
+
+    groomingFrequency: { value: 1, unit: 'week' },
+    coatType: ['smooth'],
+    coatLength: ['short'],
+    livingEnvironment: ['rural', 'suburban'],
+    description: "The Bloodhound is a gentle giant with legendary scent-tracking ability and unmatched endurance. Originally bred for trailing deer and boar, their extraordinary sense of smell now serves in search-and-rescue and police work worldwide. Despite their noble, solemn appearance, Bloodhounds are affectionate, patient, and sensitive companions who thrive in family life. They are social, loyal, and happiest with structure, companionship, and regular outdoor exercise. Their deep voice and determination reflect a hound’s purpose-driven nature, while their independence requires patient, kind training. With space to roam, consistency, and care for their distinctive ears and skin folds, the Bloodhound becomes a devoted and soulful family member.",
+    breedGroup: 'hound',
+    traits: ['gentle', 'determined', 'affectionate']
+  },
+  {
+    name: 'Bluetick Coonhound',
+    height: { min: 21, max: 27 }, 
+    weight: { min: 45, max: 80 },
+    lifeExpectancy: { min: 11, max: 12 },
+
+    affectionateWithFamily: 3,
+    goodWithKids: 3,
+    goodWithOtherDogs: 5,
+    droolingLevel: 2,
+    opennessToStrangers: 3,
+    barkingLevel: 4,
+    shedding: 3,
+    protectiveNature: 2,
+    playfulnessLevel: 3,
+    adaptabilityLevel: 4,
+    energyLevel: 4,
+    trainability: 4,
+
+    groomingFrequency: { value: 1, unit: 'week' },
+    coatType: ['smooth'],
+    coatLength: ['short'],
+    livingEnvironment: ['rural', 'suburban'],
+    description: "The Bluetick Coonhound is a bold, athletic scent hound bred for endurance, intelligence, and voice. Recognized by its striking blue-mottled coat and musical bay, this breed embodies the American hunting tradition while remaining affectionate and loyal at home. Energetic and highly driven by scent, Blueticks thrive with purpose—long walks, tracking games, or scent work keep their minds satisfied. They are affectionate yet independent, social with other dogs, and enjoy companionship. Their voice, curiosity, and stamina make them unsuitable for apartment life but deeply rewarding for active, outdoors-loving owners who appreciate their honesty, resilience, and devotion.",
+    breedGroup: 'hound',
+    traits: ['energetic', 'loyal', 'curious']
+  },
+  {
+    name: 'Boerboel',
+    height: { min: 22, max: 27 }, 
+    weight: { min: 150, max: 200 },
+    lifeExpectancy: { min: 9, max: 11 },
+
+    affectionateWithFamily: 5,
+    goodWithKids: 4,
+    goodWithOtherDogs: 2,
+    droolingLevel: 3,
+    opennessToStrangers: 3,
+    barkingLevel: 3,
+    shedding: 3,
+    protectiveNature: 5,
+    playfulnessLevel: 3,
+    adaptabilityLevel: 3,
+    energyLevel: 3,
+    trainability: 4,
+
+    groomingFrequency: { value: 3, unit: 'month' },
+    coatType: ['smooth'],
+    coatLength: ['short'],
+    livingEnvironment: ['rural', 'suburban'],
+    description: "The Boerboel is a powerful and loyal guardian bred in South Africa to protect homesteads from predators and intruders. Beneath its commanding build lies a calm, affectionate nature that bonds deeply with family. This breed combines intelligence, steadiness, and courage, making it both a devoted companion and an imposing protector. Boerboels thrive in spacious environments where they can exercise freely and feel purposeful. Their confidence and stability, when balanced with strong leadership and socialization, create a noble, affectionate family guardian with unmatched loyalty and presence.",
+    breedGroup: 'working',
+    traits: ['protective', 'confident', 'loyal']
+  },
+ 	{
+    name: 'Border Collie',
+    height: { min: 18, max: 22 }, 
+    weight: { min: 30, max: 55 },
+    lifeExpectancy: { min: 12, max: 15 },
+
+    affectionateWithFamily: 5,
+    goodWithKids: 3,
+    goodWithOtherDogs: 3,
+    droolingLevel: 1,
+    opennessToStrangers: 4,
+    barkingLevel: 4,
+    shedding: 3,
+    protectiveNature: 3,
+    playfulnessLevel: 5,
+    adaptabilityLevel: 5,
+    energyLevel: 5,
+    trainability: 5,
+
+    groomingFrequency: { value: 1, unit: 'week' },
+    coatType: ['double', 'wavy'],
+    coatLength: ['medium'],
+    livingEnvironment: ['rural', 'suburban'],
+    description: "",
+    breedGroup: '',
+    traits: ['', '', '']
+  },
+ 	
+ 	
+ 	
+ 	 	
+ 	
+ 	
 
 //Prvi dio pasmina 3 za testiranje - provjeri jesu dobre
   {
     name: 'Golden Retriever',
     height: { min: 55, max: 61 },
     weight: { min: 25, max: 34 },
-    lifeExpectancy: { min: 10, max: 12 },
+    //lifeExpectancy: { min: 10, max: 12 },
 
     affectionateWithFamily: 5,
     goodWithKids: 5,
@@ -809,17 +1119,13 @@ module.exports = [
     coatLength: 'medium',
     livingEnvironment: ['urban', 'suburban', 'rural'],
 
-    commonHealthIssues: [
-      { name: 'Cancer (various)', prevalence: 4 },
-      { name: 'Hip Dysplasia', prevalence: 3 }
-    ]
   },
 
   {
     name: 'Poodle',
     height: { min: 45, max: 60 },
     weight: { min: 18, max: 32 },
-    lifeExpectancy: { min: 12, max: 15 },
+    //lifeExpectancy: { min: 12, max: 15 },
 
     affectionateWithFamily: 5,
     goodWithKids: 4,
@@ -839,17 +1145,13 @@ module.exports = [
     coatLength: 'medium',
     livingEnvironment: ['urban', 'suburban'],
 
-    commonHealthIssues: [
-      { name: 'Addison’s Disease', prevalence: 2 },
-      { name: 'Hip Dysplasia', prevalence: 3 }
-    ]
   },
 
   {
     name: 'Border Collie',
     height: { min: 46, max: 56 },
     weight: { min: 14, max: 20 },
-    lifeExpectancy: { min: 12, max: 15 },
+    //lifeExpectancy: { min: 12, max: 15 },
 
     affectionateWithFamily: 4,
     goodWithKids: 4,
@@ -869,9 +1171,6 @@ module.exports = [
     coatLength: 'medium',
     livingEnvironment: ['suburban', 'rural'],
 
-    commonHealthIssues: [
-      { name: 'CEA (Collie Eye Anomaly)', prevalence: 3 },
-      { name: 'Epilepsy', prevalence: 3 }
-    ]
+ 
   }
 ];

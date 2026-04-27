@@ -1,10 +1,11 @@
-// /frontend/src/App.js
+// frontend/src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Home from './pages/Home';
 import Questionnaire from './pages/Questionnaire';
-import Results from './pages/Results'; // This should work now
+import Results from './pages/Results';
 import BreedCatalog from './pages/BreedCatalog';
+import BreedDetail from './pages/BreedDetail'; // Add this import
 import './App.css';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/catalog" element={<BreedCatalog />} />
+            <Route path="/breeds/:breedName" element={<BreedDetail />} /> {/* Add this route */}
             <Route path="/questionnaire" element={<Questionnaire />} />
             <Route path="/results" element={<Results />} />
           </Routes>

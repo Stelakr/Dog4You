@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api';
-import { traitLabel, valueLabel } from '../utils/traitExplanations'; // Remove traitExplanations import
+import { traitLabel, valueLabel } from '../utils/traitExplanations';
 import './Results.css';
 
 // --- sessionStorage helpers (persist explanations across refreshes) ---
@@ -23,15 +23,15 @@ const loadJSON = (k, fallback) => {
 const saveJSON = (k, v) => { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch {} };
 
 // --- Breed image helpers ---
-export function slugifyBreed(name) { // Add export
+export function slugifyBreed(name) {
   return String(name || '')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')   // non-alnum → dash
-    .replace(/(^-|-$)/g, '');      // trim dashes
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
 }
 
 // We serve static images from: /public/images/<slug>.jpg
-export function getBreedImageUrl(breedName) { // Add export
+export function getBreedImageUrl(breedName) {
   const slug = slugifyBreed(breedName);
   return `/images/${slug}.jpg`;
 }
@@ -45,20 +45,20 @@ function Results() {
   const rawAnswers = useMemo(() => location.state?.rawAnswers || [], [location.state]);
 
   // ─── State ───────────────────────────────────────────────────────
-  const [whyMatchInfo, setWhyMatchInfo]       = useState(() => loadJSON(SS_KEYS.whyMatch, {}));
-  const [careTipsInfo, setCareTipsInfo]       = useState(() => loadJSON(SS_KEYS.careTips, {}));
-  const [whyNotInfo, setWhyNotInfo]           = useState(() => loadJSON(SS_KEYS.whyNot, ''));
-  const [inputValue, setInputValue]           = useState(() => loadJSON(SS_KEYS.input, ''));
-  const [suggestion, setSuggestion]           = useState(() => loadJSON(SS_KEYS.suggestion, ''));
+  const [whyMatchInfo, setWhyMatchInfo] = useState(() => loadJSON(SS_KEYS.whyMatch, {}));
+  const [careTipsInfo, setCareTipsInfo] = useState(() => loadJSON(SS_KEYS.careTips, {}));
+  const [whyNotInfo, setWhyNotInfo] = useState(() => loadJSON(SS_KEYS.whyNot, ''));
+  const [inputValue, setInputValue] = useState(() => loadJSON(SS_KEYS.input, ''));
+  const [suggestion, setSuggestion] = useState(() => loadJSON(SS_KEYS.suggestion, ''));
   const [exclusionBannerText, setExclusionBannerText] = useState(() => loadJSON(SS_KEYS.exclusion, ''));
   const [loadingWhyMatch, setLoadingWhyMatch] = useState({});
-  const [loadingWhyNot, setLoadingWhyNot]     = useState(false);
+  const [loadingWhyNot, setLoadingWhyNot] = useState(false);
   const [loadingCareTips, setLoadingCareTips] = useState({});
   const [breedDetailsCache, setBreedDetailsCache] = useState({});
 
   // For autocomplete + "why not" flow
-  const [allBreedNames, setAllBreedNames]     = useState([]);
-  const [submittedBreed, setSubmittedBreed]   = useState(''); // last submitted/selected breed
+  const [allBreedNames, setAllBreedNames] = useState([]);
+  const [submittedBreed, setSubmittedBreed] = useState('');
 
   // A stable signature of the result set, order-insensitive:
   const resultsSig = JSON.stringify(
@@ -78,12 +78,12 @@ function Results() {
     sessionStorage.setItem(SS_KEYS.resultsSig, resultsSig);
   }, [resultsSig]);
 
-  useEffect(() => saveJSON(SS_KEYS.whyMatch,   whyMatchInfo),        [whyMatchInfo]);
-  useEffect(() => saveJSON(SS_KEYS.careTips,   careTipsInfo),        [careTipsInfo]);
-  useEffect(() => saveJSON(SS_KEYS.whyNot,     whyNotInfo),          [whyNotInfo]);
-  useEffect(() => saveJSON(SS_KEYS.input,      inputValue),          [inputValue]);
-  useEffect(() => saveJSON(SS_KEYS.suggestion, suggestion),          [suggestion]);
-  useEffect(() => saveJSON(SS_KEYS.exclusion,  exclusionBannerText), [exclusionBannerText]);
+  useEffect(() => saveJSON(SS_KEYS.whyMatch, whyMatchInfo), [whyMatchInfo]);
+  useEffect(() => saveJSON(SS_KEYS.careTips, careTipsInfo), [careTipsInfo]);
+  useEffect(() => saveJSON(SS_KEYS.whyNot, whyNotInfo), [whyNotInfo]);
+  useEffect(() => saveJSON(SS_KEYS.input, inputValue), [inputValue]);
+  useEffect(() => saveJSON(SS_KEYS.suggestion, suggestion), [suggestion]);
+  useEffect(() => saveJSON(SS_KEYS.exclusion, exclusionBannerText), [exclusionBannerText]);
 
   // ─── Redirect if missing context ────────────────────────────────
   useEffect(() => {
@@ -150,7 +150,7 @@ function Results() {
 
     const parts = applicable.map(a => {
       const prettyTrait = traitLabel(a.trait);
-      const prettyVal   = valueLabel(a.trait, a.value); // handles arrays & maps values → human labels
+      const prettyVal = valueLabel(a.trait, a.value);
       return `You excluded ${prettyTrait}: ${prettyVal}`;
     });
 
@@ -247,7 +247,7 @@ function Results() {
   // ─── Render ─────────────────────────────────────────────────────
   if (!results.length) {
     return (
-      <div style={{ padding: '1rem', maxWidth: 600, margin: '0 auto' }}>
+      <div className="no-results-container">
         <p>No matches found.</p>
         <button onClick={handleTryAgain}>Try Again</button>
       </div>
@@ -276,13 +276,6 @@ function Results() {
                 </p>
               )}
             </div>
-            <button
-              className="explain-button"
-              onClick={() => fetchWhyMatch(r, i)}
-              disabled={loadingWhyMatch[i]}
-            >
-              {loadingWhyMatch[i] ? '⏳ Loading...' : 'Why this match?'}
-            </button>
           </div>
           
           {/* Breed image and details */}
@@ -300,37 +293,53 @@ function Results() {
               <p className="breed-name">{r.breed}</p>
             </div>
             
-            {/* Breed details and buttons */}
+            {/* Breed details and buttons on the right */}
             <div className="breed-details">
-              <div className="explanation-section">
-                {whyMatchInfo[i] && (
-                  <div className="why-match-info">
-                    <strong>Explanation:</strong> {whyMatchInfo[i]}
-                  </div>
-                )}
-              </div>
-              
-              <div className="action-buttons">
+              <div className="action-buttons-right">
+                <button
+                  className="explain-button"
+                  onClick={() => fetchWhyMatch(r, i)}
+                  disabled={loadingWhyMatch[i]}
+                >
+                  {loadingWhyMatch[i] ? '⏳ Loading...' : 'Why this match?'}
+                </button>
+                
                 <button
                   className="care-tips-button"
                   onClick={() => fetchCareTips(r.breed, i)}
                   disabled={loadingCareTips[i]}
                 >
-                  {loadingCareTips[i] ? '⏳ Loading...' : 'Show Care Tips'}
+                  {loadingCareTips[i] ? '⏳ Loading...' : 'Care Tips'}
                 </button>
               </div>
               
-              {careTipsInfo[i] && (
-                <div className="care-tips-info">
-                  <strong>Care Tips:</strong> {careTipsInfo[i]}
-                </div>
-              )}
+              <div className="explanations-container">
+                {whyMatchInfo[i] && (
+                  <div className="why-match-info">
+                    <h4>🐾 Why This Breed Matches You</h4>
+                    <p>{whyMatchInfo[i]}</p>
+                  </div>
+                )}
+                
+                {careTipsInfo[i] && (
+                  <div className="care-tips-info">
+                    <h4>💡 Care Tips for {r.breed}</h4>
+                    <p>{careTipsInfo[i]}</p>
+                  </div>
+                )}
+                
+                {!whyMatchInfo[i] && !careTipsInfo[i] && (
+                  <div className="info-placeholder">
+                    <p>Click the buttons to learn more about why this breed matches you and how to care for them.</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       ))}
 
-      {/* ─── "Why not" input, autocomplete, suggestion, explanation ─── */}
+      {/* ─── "Why not this breed?" section ───────────────────────── */}
       <div className="why-not-section">
         <h3>Expected a different breed?</h3>
         <p>Type the breed you thought you'd get and ask why it wasn't recommended.</p>
@@ -356,7 +365,7 @@ function Results() {
                   .filter((n) => {
                     const lowN = n.toLowerCase();
                     const q = inputValue.toLowerCase();
-                    return lowN.includes(q) && lowN !== q; // hide exact match
+                    return lowN.includes(q) && lowN !== q;
                   })
                   .slice(0, 5)
                   .map((b) => (
@@ -364,20 +373,17 @@ function Results() {
                       key={b}
                       className="autocomplete-item"
                       onClick={() => {
-                        // choose suggestion → run why-not immediately
                         setInputValue(b);
                         setSubmittedBreed(b);
                         setWhyNotInfo('');
                         setExclusionBannerText('');
                         setSuggestion('');
-                        // Use current selection
                         (async () => {
                           setLoadingWhyNot(true);
                           try {
                             const data = await fetchBreedDetails(b);
                             if (!data) {
                               setExclusionBannerText('Breed not found in our database.');
-                              // Try suggestion anyway (usually unnecessary for suggestions)
                               try {
                                 const resp = await api.post('/api/llm/suggestBreed', { input: b });
                                 const cand = (resp.data?.data || '').trim();
@@ -410,7 +416,6 @@ function Results() {
             )}
           </div>
 
-          {/* Button uses freshest input value */}
           <button
             onClick={fetchWhyNot}
             disabled={loadingWhyNot || !inputValue.trim()}
@@ -420,14 +425,14 @@ function Results() {
           </button>
         </div>
 
-        {/* Exclusion Banner (only shows after submit/selection) */}
+        {/* Exclusion Banner */}
         {exclusionBannerText && (
           <div className="exclusion-banner">
             <strong>{exclusionBannerText}</strong>
           </div>
         )}
 
-        {/* Did you mean (after submit, for unknown breed) */}
+        {/* Did you mean suggestion */}
         {suggestion &&
           suggestion.toLowerCase() !== (submittedBreed || inputValue).toLowerCase() && (
             <div className="suggestion-banner">
@@ -439,7 +444,7 @@ function Results() {
                   setWhyNotInfo('');
                   setExclusionBannerText('');
                   setSuggestion('');
-                  fetchWhyNot(); // valid → will call LLM
+                  fetchWhyNot();
                 }}
                 className="suggestion-button"
               >
@@ -483,4 +488,4 @@ function Results() {
   );
 }
 
-export default Results; 
+export default Results;

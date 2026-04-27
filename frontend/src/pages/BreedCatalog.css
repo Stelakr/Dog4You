@@ -1,4 +1,4 @@
-/* /frontend/src/pages/BreedCatalog.css */
+/* frontend/src/pages/BreedCatalog.css */
 .breed-catalog {
   max-width: 1200px;
   margin: 0 auto;
@@ -10,6 +10,7 @@
   color: #1f2937;
   text-align: center;
   margin-bottom: 1rem;
+  font-size: 2.5rem;
 }
 
 .catalog-intro {
@@ -18,6 +19,9 @@
   margin-bottom: 2rem;
   font-size: 1.1rem;
   line-height: 1.6;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .search-container {
@@ -32,16 +36,18 @@
   border: 2px solid #d1d5db;
   border-radius: 8px;
   font-size: 1rem;
+  transition: border-color 0.2s;
 }
 
 .search-input:focus {
   outline: none;
   border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .breeds-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
 }
 
@@ -50,18 +56,26 @@
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
 }
 
 .breed-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-color: #3b82f6;
 }
 
 .breed-image {
   width: 100%;
   height: 200px;
   object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.breed-card:hover .breed-image {
+  transform: scale(1.05);
 }
 
 .breed-info {
@@ -72,41 +86,122 @@
   margin: 0 0 1rem 0;
   color: #1f2937;
   font-size: 1.25rem;
+  font-weight: 600;
 }
 
-.breed-stats {
+/* Size and Group Info */
+.breed-basic-info {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
-.stat {
+.size-label {
+  background: #3b82f6;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.group-label {
+  background: #10b981;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Energy Level */
+.energy-level {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: #f8fafc;
+  border-radius: 6px;
 }
 
-.stat-label {
+.energy-label {
   font-weight: 600;
   color: #374151;
+  font-size: 0.9rem;
 }
 
-.stat-value {
+.energy-stars {
+  color: #f59e0b;
+  font-size: 1rem;
+  letter-spacing: 1px;
+}
+
+/* Breed Traits */
+.breed-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.trait-tag {
+  background: #eff6ff;
+  color: #1e40af;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid #dbeafe;
+}
+
+/* Description */
+.breed-description-preview {
   color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 1rem;
+  font-style: italic;
+}
+
+.click-hint {
+  text-align: center;
+  color: #3b82f6;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.5rem;
+  background: #eff6ff;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.breed-card:hover .click-hint {
+  background: #dbeafe;
 }
 
 .catalog-loading, .catalog-error, .no-results {
   text-align: center;
-  padding: 2rem;
+  padding: 3rem;
   font-size: 1.1rem;
+}
+
+.catalog-loading {
+  color: #6b7280;
 }
 
 .catalog-error {
   color: #dc2626;
+  background: #fef2f2;
+  border-radius: 8px;
+  border: 1px solid #fecaca;
 }
 
 .no-results {
   color: #6b7280;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
 }
 
 @media (max-width: 768px) {
@@ -115,7 +210,33 @@
   }
   
   .breeds-grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1rem;
+  }
+  
+  .breed-info {
+    padding: 1rem;
+  }
+  
+  .breed-catalog h1 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .breeds-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .breed-basic-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .energy-level {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 }
