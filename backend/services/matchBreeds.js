@@ -1,5 +1,6 @@
 // /backend/services/matchBreeds.js
 const Breed = require('../models/Breed');
+const { getSizeCategory } = require('../utils/sizeCategory');
 
 
 const traitLabels = {
@@ -85,13 +86,7 @@ async function matchBreeds(answers, includeBreakdown = false) {
         // Resolve breedValue incl. virtual sizeCategory
         let breedValue;
         if (trait === 'sizeCategory') {
-          const hmax = breed.height?.max;
-          if (typeof hmax === 'number') {
-            // small: <30 ; medium: >30 && <=55 ; large: >55
-            breedValue = (hmax < 30) ? 'small' : (hmax > 30 && hmax <= 55) ? 'medium' : 'large';
-          } else {
-            breedValue = undefined;
-          }
+          breedValue = getSizeCategory(breed.height?.max);
         } else {
           breedValue = breed[trait];
         }

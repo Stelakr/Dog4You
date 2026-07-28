@@ -22,12 +22,12 @@ exports.questionValidators = [
 
   body('trait')
     .isIn([
-      'size', 'energyLevel', 'groomingFrequency', 'apartmentFriendly',
+      'sizeCategory', 'energyLevel', 'groomingFrequency', 'apartmentFriendly',
       'goodWithKids', 'goodWithOtherDogs', 'trainability', 'shedding',
       'barkingLevel', 'droolingLevel', 'opennessToStrangers',
       'protectiveNature', 'adaptabilityLevel', 'playfulnessLevel',
-      'coatType', 'coatLength', 'lifeExpectancy', 'weight', 'height' ,
-      'livingEnvironment'
+      'affectionateWithFamily', 'coatType', 'coatLength', 'lifeExpectancy',
+      'weight', 'height', 'livingEnvironment'
     ])
     .withMessage('Invalid trait name'),
 

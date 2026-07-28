@@ -2,6 +2,12 @@
 const OpenAI = require('openai');
 const path = require('path');
 
+if (!process.env.OPENAI_API_KEY) {
+  throw new Error(
+    'OPENAI_API_KEY is not set. Add it to backend/.env before starting the server.'
+  );
+}
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Allow easy model swap via env

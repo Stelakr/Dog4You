@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { getSizeCategory } = require('../utils/sizeCategory');
 
 const breedSchema = new mongoose.Schema({
   name: {
@@ -93,11 +94,7 @@ traits: {
 
 // Virtual for size category
 breedSchema.virtual('sizeCategory').get(function () {
-  const height = this.height?.max;
-  if (height === undefined || height === null) return null;
-  if (height < 40) return 'small';
-  if (height >= 40 && height <= 60) return 'medium';
-  return 'large';
+  return getSizeCategory(this.height?.max) ?? null;
 });
 
 
